@@ -1,5 +1,6 @@
 import { arrayDiff, InsertDiff, MoveDiff, RemoveDiff } from "./arrayDiff.js";
 import { computed, observable } from "@dependable/state";
+export * from "@dependable/state";
 
 const isArray = (v) => Array.isArray(v);
 const getAnchor = (dom) => (isArray(dom) ? dom[0] : dom);
@@ -18,7 +19,7 @@ export const mount = (vdom) => {
   }
 };
 
-export const flush = (vdom) => {
+const flush = (vdom) => {
   if (isArray(vdom)) {
     return vdom.flatMap(flush);
   } else {
@@ -681,14 +682,6 @@ export const clone = (element, { children, ...props }) => ({
   },
   children: children || element.children,
 });
-
-export const h = (type, props, ...children) => {
-  return {
-    type: type,
-    props: props || {},
-    children: children.length ? children.flat() : null,
-  };
-};
 
 export const combineRefs =
   (...refs) =>

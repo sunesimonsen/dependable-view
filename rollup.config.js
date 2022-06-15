@@ -1,6 +1,7 @@
 import { terser } from "rollup-plugin-terser";
+import { nodeResolve } from "@rollup/plugin-node-resolve";
 
-const plugins = [];
+const plugins = [nodeResolve()];
 const minifyPlugins = [
   terser({
     compress: true,
@@ -19,21 +20,23 @@ const minifyPlugins = [
   }),
 ];
 
-export default [
+const builds = ["vdom", "html", "h"].flatMap((name) => [
   {
-    input: "src/view.js",
+    input: `src/${name}.js`,
     output: {
-      file: "dist/dependable-view.esm.js",
+      file: `dist/dependable-view-${name}.esm.js`,
       format: "esm",
     },
     plugins,
   },
   {
-    input: "src/view.js",
+    input: `src/${name}.js`,
     output: {
-      file: "dist/dependable-view.esm.min.js",
+      file: `dist/dependable-view-${name}.esm.min.js`,
       format: "esm",
     },
     plugins: plugins.concat(minifyPlugins),
   },
-];
+]);
+
+export default builds;
