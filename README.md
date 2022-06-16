@@ -3,7 +3,13 @@
 [![Checks](https://github.com/sunesimonsen/dependable-view/workflows/CI/badge.svg)](https://github.com/sunesimonsen/dependable-view/actions?query=workflow%3ACI+branch%3Amain)
 [![Bundle Size](https://img.badgesize.io/https:/unpkg.com/@dependable/view/dist/dependable-view.esm.min.js?label=gzip&compression=gzip)](https://unpkg.com/@dependable/view/dist/dependable-view.esm.min.js)
 
-UNDER CONTRUCTION
+A small VDOM based view layer for [@dependable/state](https://github.com/sunesimonsen/dependable-state)
+
+- Easy learning curve
+- Tiny, less than 3KB
+- Depends only on [@dependable/state](https://github.com/sunesimonsen/dependable-state)
+- Allows multiple versions of the library in the page
+- Batches updates
 
 ## Install
 
@@ -14,6 +20,61 @@ npm install --save @dependable/view
 # yarn
 npm add @dependable/view
 ```
+
+## Usage
+
+Let's make a silly todo list to see how things work:
+
+```js
+import { render, html } from "@dependable/view";
+import { observable, computed } from "@dependable/state";
+
+// The todo state
+const todos = observable([]);
+const todoCount = computed(() => todos().length);
+
+// Observable for the input text
+const text = observable("");
+const setText = (e) => text(e.target.value);
+
+// Add the current todo text to the list
+const addTodo = () => {
+  todos([...todos(), text()]);
+  text("");
+};
+
+class TodoInput {
+  render() {
+    return html`<input .value=${text()} onInput=${setText} />`;
+  }
+}
+
+class TodoList {
+  render() {
+    return html`
+      <form onSubmit=${addTodo} action="javascript:">
+        <label>
+          Add Todo
+          <${TodoInput} />
+        </label>
+        <button type="submit">Add</button>
+        <ul>
+          ${todos().map((text) => html`<li>${text}</li>`)}
+        </ul>
+      </form>
+      Number of todos: ${todoCount()}
+    `;
+  }
+}
+
+render(html`<${TodoList} />`);
+```
+
+As you can see, we can model the global application state outside of components.
+This separates the logic from the views and allows for easier testing for the
+logic.
+
+The render methods just uses the observables and computeds and is re-rendered with they change.
 
 ## Acknowledgements
 
