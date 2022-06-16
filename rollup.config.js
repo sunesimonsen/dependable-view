@@ -27,6 +27,7 @@ const builds = ["vdom", "html", "h"].flatMap((name) => [
       file: `dist/dependable-view-${name}.esm.js`,
       format: "esm",
     },
+    external: ["@dependable/state"],
     plugins,
   },
   {
@@ -35,6 +36,7 @@ const builds = ["vdom", "html", "h"].flatMap((name) => [
       file: `dist/dependable-view-${name}.esm.min.js`,
       format: "esm",
     },
+    external: ["@dependable/state"],
     plugins: plugins.concat(minifyPlugins),
   },
 ]);
