@@ -1,4 +1,4 @@
-import { create, update, mount } from "../src/vdom.js";
+import { create, update, mount } from "../src/vdom-private.js";
 import { html } from "../src/html.js";
 import { flush } from "@dependable/state";
 import unexpected from "unexpected";
