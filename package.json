@@ -10,10 +10,7 @@
     "./h": "./src/h.js",
     "./html": "./src/html.js"
   },
-  "files": [
-    "dist",
-    "src"
-  ],
+  "files": ["dist", "src"],
   "keywords": [
     "dependable",
     "vdom",
@@ -42,7 +39,7 @@
     "access": "public"
   },
   "engines": {
-    "node": ">=14"
+    "node": ">=16"
   },
   "dependencies": {
     "@dependable/state": "^0.5.0",
