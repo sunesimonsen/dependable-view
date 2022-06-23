@@ -87,10 +87,6 @@ class UserComponent {
     const instanceProps = this._instanceProps();
     const instance = new Constructor(instanceProps, context);
 
-    instance.createRef = (name) => (ref) => {
-      instance[name] = ref;
-    };
-
     this._tree = computed(() => {
       try {
         const nextProps = this._instanceProps();
@@ -107,6 +103,9 @@ class UserComponent {
     this._render = this._render.bind(this);
     instance.context = context;
     instance.props = instanceProps;
+    if (instance.didCatch) {
+      instance.didCatch = instance.didCatch.bind(instance);
+    }
   }
 
   get _dom() {
@@ -122,8 +121,6 @@ class UserComponent {
     const instance = this._instance;
 
     try {
-      instance.willUpdate && instance.willUpdate();
-
       this._vdom = update(
         this._tree(),
         this._vdom,
@@ -142,8 +139,6 @@ class UserComponent {
     try {
       let mounting = true;
       const instance = this._instance;
-
-      instance.willMount && instance.willMount();
 
       this._tree.subscribe(this._render);
 
@@ -181,12 +176,6 @@ class UserComponent {
       this._errorHandler(e);
     }
     unmount(this._vdom);
-
-    try {
-      instance.didUnmount && instance.didUnmount();
-    } catch (e) {
-      this._errorHandler(e);
-    }
   }
 
   _flush() {
@@ -666,23 +655,36 @@ const reThrow = (e) => {
   throw e;
 };
 
-export const render = (value, container = document.body, context = {}) => {
+/**
+ * Renders a virtual DOM into a container.
+ *
+ * @function
+ *
+ * @param {import('./shared').VNodes} vnodes the virtual DOM to render.
+ * @param {import('./shared').Container} container the container to render into.
+ * @param {import('./shared').Context} context the rendering context
+ */
+export const render = (vnodes, container = document.body, context = {}) => {
   removeChildren(container);
-  const vdom = create(value, Object.freeze(context), reThrow, false);
+  const vdom = create(vnodes, Object.freeze(context), reThrow, false);
   appendChildren(container, mount(vdom));
   flush(vdom);
 };
 
-export const clone = (element, { children, ...props }) => ({
+/**
+ * Clone a {@link VElement} with new properties and children
+ *
+ * @function
+ *
+ * @param {import('./shared').VElement} element the virual nodes to clone
+ * @param {import('./shared').VElementOverrides} overrides the overrides for the virtual element
+ * @return {import('./shared').VNode} the cloned virtual node
+ */
+export const clone = (element, overrides) => ({
   type: element.type,
   props: {
     ...element.props,
-    ...props,
+    ...overrides?.props,
   },
-  children: children || element.children,
+  children: overrides?.children || node.children,
 });
-
-export const combineRefs =
-  (...refs) =>
-  (node) =>
-    refs.forEach((ref) => ref && ref(node));

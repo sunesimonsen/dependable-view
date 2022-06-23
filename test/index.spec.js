@@ -8,15 +8,16 @@ import sinon from "sinon";
 const expect = unexpected.clone().use(unexpectedSimon).use(unexpectedDom);
 
 class ErrorBoundary {
-  constructor({ name }) {
+  constructor(props, context) {
     this.error = observable(null);
-    this.didCatch = (e) => {
-      this.error(e);
-    };
   }
 
   render({ children, fallback }) {
     return this.error() ? fallback : children;
+  }
+
+  didCatch(e) {
+    this.error(e);
   }
 }
 
@@ -101,7 +102,7 @@ describe("view", () => {
     });
 
     describe("when the data for the component changes", () => {
-      it("re-renders", async () => {
+      it("re-renders", () => {
         class Title {
           render() {
             return html`<h1 class="title" title=${message()}>${message()}</h1>`;
@@ -129,7 +130,7 @@ describe("view", () => {
     });
 
     describe("when the data subscription is updated with the props", () => {
-      it("unsubscribes the old subscription and start listening for changes on the new data subscription", async () => {
+      it("unsubscribes the old subscription and start listening for changes on the new data subscription", () => {
         const mountSpy = sinon.spy();
         const updateSpy = sinon.spy();
 
@@ -177,7 +178,7 @@ describe("view", () => {
     });
 
     describe("when the props for the component changes", () => {
-      it("re-renders", async () => {
+      it("re-renders", () => {
         const title = observable("This is a title");
         const message = observable("Message from observable");
 
@@ -214,7 +215,7 @@ describe("view", () => {
     });
 
     describe("when the props and the observables for the component changes", () => {
-      it("re-renders", async () => {
+      it("re-renders", () => {
         const title = observable("This is a title");
         const message = observable("Message from observable");
 
@@ -252,7 +253,7 @@ describe("view", () => {
 
     describe("when the children is changing", () => {
       describe("and the children is keyed", () => {
-        it("updates the existing DOM", async () => {
+        it("updates the existing DOM", () => {
           const reversed = observable(false);
 
           class Reversible {
@@ -301,26 +302,20 @@ describe("view", () => {
   });
 
   describe("with a component containing life-cycle methods", () => {
-    it("calls the life-cycle methods in the correct order", async () => {
-      const willMountSpy = sinon.spy().named("willMount");
+    it("calls the life-cycle methods in the correct order", () => {
       const didMountSpy = sinon.spy().named("didMount");
-      const willUpdateSpy = sinon.spy().named("willUpdate");
       const didUpdateSpy = sinon.spy().named("didUpdate");
       const willUnmountSpy = sinon.spy().named("willUnmount");
-      const didUnmountSpy = sinon.spy().named("didUnmount");
 
       const visible = observable(true);
       const message = observable("Hello");
       const title = observable("Title");
 
       class TestComponent {
-        constructor() {
-          this.willMount = willMountSpy;
+        constructor(props, context) {
           this.didMount = didMountSpy;
-          this.willUpdate = willUpdateSpy;
           this.didUpdate = didUpdateSpy;
           this.willUnmount = willUnmountSpy;
-          this.didUnmount = didUnmountSpy;
         }
 
         render({ title }) {
@@ -369,31 +364,20 @@ describe("view", () => {
       expect(container, "to satisfy", `<div><!--hidden--></div>`);
 
       expect(
-        [
-          willMountSpy,
-          didMountSpy,
-          willUpdateSpy,
-          didUpdateSpy,
-          willUnmountSpy,
-          didUnmountSpy,
-        ],
+        [didMountSpy, didUpdateSpy, willUnmountSpy],
         "to have calls satisfying",
         () => {
           // mount
-          willMountSpy();
           didMountSpy();
 
           // message update
-          willUpdateSpy();
           didUpdateSpy();
 
           // title update (props)
-          willUpdateSpy();
           didUpdateSpy();
 
           // visibility change
           willUnmountSpy();
-          didUnmountSpy();
         }
       );
     });
@@ -418,7 +402,7 @@ describe("view", () => {
       </h1>`;
       const fallback = html`<h1 data-test-id="failure">Failure</h1>`;
 
-      it("catches errors in constructors", async () => {
+      it("catches errors in constructors", () => {
         class TestComponent {
           constructor() {
             throw new Error("Test failure");
@@ -438,7 +422,7 @@ describe("view", () => {
           container
         );
 
-        await clock.runAllAsync();
+        flush();
 
         expect(
           container,
@@ -447,7 +431,7 @@ describe("view", () => {
         );
       });
 
-      it("catches errors in computeds", async () => {
+      it("catches errors in computeds", () => {
         const crashMachine = computed(() => {
           throw new Error("Test failure");
         });
@@ -467,7 +451,7 @@ describe("view", () => {
           container
         );
 
-        await clock.runAllAsync();
+        flush();
 
         expect(
           container,
@@ -476,36 +460,7 @@ describe("view", () => {
         );
       });
 
-      it("catches errors in willMount", async () => {
-        class TestComponent {
-          willMount() {
-            throw new Error("Test failure");
-          }
-
-          render() {
-            return null;
-          }
-        }
-
-        render(
-          html`<${ErrorBoundary} name="test-parent" fallback=${parentFallback}>
-            <${ErrorBoundary} name="test" fallback=${fallback}>
-              <${TestComponent} />
-            <//>
-          <//>`,
-          container
-        );
-
-        await clock.runAllAsync();
-
-        expect(
-          container,
-          "to contain elements matching",
-          "[data-test-id=failure]"
-        );
-      });
-
-      it("catches errors in didMount", async () => {
+      it("catches errors in didMount", () => {
         class TestComponent {
           didMount() {
             throw new Error("Test failure");
@@ -525,63 +480,6 @@ describe("view", () => {
           container
         );
 
-        await clock.runAllAsync();
-
-        expect(
-          container,
-          "to contain elements matching",
-          "[data-test-id=failure]"
-        );
-      });
-
-      it("catches errors in render", async () => {
-        class TestComponent {
-          render() {
-            throw new Error("Test failure");
-          }
-        }
-
-        render(
-          html`<${ErrorBoundary} name="test-parent" fallback=${parentFallback}>
-            <${ErrorBoundary} name="test" fallback=${fallback}>
-              <${TestComponent} />
-            <//>
-          <//>`,
-          container
-        );
-
-        await clock.runAllAsync();
-
-        expect(
-          container,
-          "to contain elements matching",
-          "[data-test-id=failure]"
-        );
-      });
-
-      it("catches errors in willUpdate", async () => {
-        const message = observable("");
-
-        class TestComponent {
-          willUpdate() {
-            throw new Error("Test failure");
-          }
-
-          render() {
-            return html`<h1>${message()}</h1>`;
-          }
-        }
-
-        render(
-          html`<${ErrorBoundary} name="test-parent" fallback=${parentFallback}>
-            <${ErrorBoundary} name="test" fallback=${fallback}>
-              <${TestComponent} />
-            <//>
-          <//>`,
-          container
-        );
-
-        message("update");
         flush();
 
         expect(
@@ -591,7 +489,32 @@ describe("view", () => {
         );
       });
 
-      it("catches errors in didUpdate", async () => {
+      it("catches errors in render", () => {
+        class TestComponent {
+          render() {
+            throw new Error("Test failure");
+          }
+        }
+
+        render(
+          html`<${ErrorBoundary} name="test-parent" fallback=${parentFallback}>
+            <${ErrorBoundary} name="test" fallback=${fallback}>
+              <${TestComponent} />
+            <//>
+          <//>`,
+          container
+        );
+
+        flush();
+
+        expect(
+          container,
+          "to contain elements matching",
+          "[data-test-id=failure]"
+        );
+      });
+
+      it("catches errors in didUpdate", () => {
         const message = observable("");
 
         class TestComponent {
@@ -623,53 +546,11 @@ describe("view", () => {
         );
       });
 
-      it("catches errors in willUnmount", async () => {
+      it("catches errors in willUnmount", () => {
         const visible = observable(true);
 
         class TestComponent {
           willUnmount() {
-            throw new Error("Test failure");
-          }
-
-          render() {
-            return null;
-          }
-        }
-
-        class App {
-          render() {
-            return html`
-              <${ConditionalChildren} visible=${visible()}>
-                <${TestComponent} />
-              <//>
-            `;
-          }
-        }
-
-        render(
-          html`<${ErrorBoundary} name="test-parent" fallback=${parentFallback}>
-            <${ErrorBoundary} name="test" fallback=${fallback}>
-              <${App} />
-            <//>
-          <//>`,
-          container
-        );
-
-        visible(false);
-        flush();
-
-        expect(
-          container,
-          "to contain elements matching",
-          "[data-test-id=failure]"
-        );
-      });
-
-      it("catches errors in didUnmount", async () => {
-        const visible = observable(true);
-
-        class TestComponent {
-          didUnmount() {
             throw new Error("Test failure");
           }
 
@@ -734,34 +615,8 @@ describe("view", () => {
       );
     });
 
-    describe("when using the createRef method", () => {
-      it("creates a ref on the instance", () => {
-        class TestComponent {
-          didMount() {
-            this.headingRef.setAttribute("id", "title");
-          }
-
-          render() {
-            return html`
-              <section>
-                <h1 ref=${this.createRef("headingRef")}>Title</h1>
-              </section>
-            `;
-          }
-        }
-
-        render(html`<${TestComponent} />`, container);
-
-        expect(
-          container,
-          "to satisfy",
-          '<div><section><h1 id="title">Title</h1></section></div>'
-        );
-      });
-    });
-
     describe("when the ref is replaced", () => {
-      it("calls the new ref", async () => {
+      it("calls the new ref", () => {
         const refName = observable("setId");
 
         class TestComponent {
@@ -818,7 +673,7 @@ describe("view", () => {
     });
 
     describe("and there was an earlier event listener attached", () => {
-      it("deattaches the old listener and attaches the new one", async () => {
+      it("deattaches the old listener and attaches the new one", () => {
         const oldListener = sinon.spy();
         const newListener = sinon.spy();
 
@@ -855,7 +710,7 @@ describe("view", () => {
     });
 
     describe("and removing it again", () => {
-      it("no longer calls the event handler", async () => {
+      it("no longer calls the event handler", () => {
         const listener = sinon.spy();
 
         const enabled = observable(true);
@@ -886,7 +741,7 @@ describe("view", () => {
     });
 
     describe("and removing the attribute", () => {
-      it("no longer calls the event handler", async () => {
+      it("no longer calls the event handler", () => {
         const listener = sinon.spy();
 
         const enabled = observable(true);
@@ -941,7 +796,7 @@ describe("view", () => {
     });
 
     describe("and there was an earlier event listener attached", () => {
-      it("deattaches the old listener and attaches the new one", async () => {
+      it("deattaches the old listener and attaches the new one", () => {
         const oldListener = sinon.spy();
         const newListener = sinon.spy();
 
@@ -978,7 +833,7 @@ describe("view", () => {
     });
 
     describe("and removing it again", () => {
-      it("no longer calls the event handler", async () => {
+      it("no longer calls the event handler", () => {
         const listener = sinon.spy();
 
         const enabled = observable(true);
@@ -1009,7 +864,7 @@ describe("view", () => {
     });
 
     describe("and removing the attribute", () => {
-      it("no longer calls the event handler", async () => {
+      it("no longer calls the event handler", () => {
         const listener = sinon.spy();
 
         const enabled = observable(true);
@@ -1050,7 +905,7 @@ describe("view", () => {
     });
 
     describe("when updating the property", () => {
-      it("updates the DOM property", async () => {
+      it("updates the DOM property", () => {
         const value = observable("Initial value");
 
         class TestComponent {
@@ -1075,7 +930,7 @@ describe("view", () => {
     });
 
     describe("when removing the property", () => {
-      it("the DOM property is left unchanged", async () => {
+      it("the DOM property is left unchanged", () => {
         const hasValue = observable(true);
 
         class TestComponent {
@@ -1104,7 +959,7 @@ describe("view", () => {
 
   describe("with a custom component returning an array", () => {
     describe("and its only the items that changes", () => {
-      it("still updates the DOM", async () => {
+      it("still updates the DOM", () => {
         const number = observable(0);
 
         class TestComponent {
@@ -1136,7 +991,7 @@ describe("view", () => {
       });
     });
 
-    it("renders the array to the DOM", async () => {
+    it("renders the array to the DOM", () => {
       const items = observable(["one", "two", "three"]);
 
       class TestComponent {
@@ -1163,7 +1018,7 @@ describe("view", () => {
       );
     });
 
-    it("renders a keyed array to the DOM", async () => {
+    it("renders a keyed array to the DOM", () => {
       const items = observable(["one", "two", "three"]);
 
       class TestComponent {
@@ -1215,7 +1070,7 @@ describe("view", () => {
       });
 
       describe("when the target is not specified", () => {
-        it("renders the children in the portal document body", async () => {
+        it("renders the children in the portal document body", () => {
           const visible = observable(true);
 
           class TestComponent {
@@ -1285,7 +1140,7 @@ describe("view", () => {
       });
 
       describe("and updating the portal children", () => {
-        it("updates the portal DOM", async () => {
+        it("updates the portal DOM", () => {
           message("Updated portal!");
           flush();
 
@@ -1294,7 +1149,7 @@ describe("view", () => {
       });
 
       describe("and removing the children", () => {
-        it("removes the portal DOM", async () => {
+        it("removes the portal DOM", () => {
           message(null);
           flush();
 
@@ -1324,7 +1179,7 @@ describe("view", () => {
       });
 
       describe("and setting the portal children", () => {
-        it("updates the portal DOM", async () => {
+        it("updates the portal DOM", () => {
           message("Updated portal!");
           flush();
 
@@ -1333,7 +1188,7 @@ describe("view", () => {
       });
 
       describe("and the portal is updated to be emtpy", () => {
-        it("keeps the empty portal", async () => {
+        it("keeps the empty portal", () => {
           message(false);
           flush();
 
@@ -1343,7 +1198,7 @@ describe("view", () => {
     });
 
     describe("when the target is changed", () => {
-      it("moves the children to the new target", async () => {
+      it("moves the children to the new target", () => {
         const target = observable("target1");
 
         const target1 = document.createElement("div");
@@ -1412,9 +1267,9 @@ describe("view", () => {
       expect(container, "to satisfy", "<div>Hi!, Jane Doe</div>");
     });
 
-    it("doesn't allow chaning the context", async () => {
+    it("doesn't allow chaning the context", () => {
       class Welcome {
-        willMount() {
+        didMount() {
           this.context.greeting = "HALLO!, ";
         }
 
@@ -1435,7 +1290,7 @@ describe("view", () => {
         { greeting: "Hi!, " }
       );
 
-      await clock.runAllAsync();
+      flush();
 
       expect(container, "to contain test id", "failed");
     });
@@ -1462,7 +1317,7 @@ describe("view", () => {
       expect(container, "to satisfy", "<div>Hi!, Jane Doe</div>");
     });
 
-    it("updating the context doesn't trigger a re-render", async () => {
+    it("updating the context doesn't trigger a re-render", () => {
       let renderedGreeting;
 
       const greeting = observable("Hi!, ");

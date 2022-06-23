@@ -20,6 +20,7 @@ export function MoveDiff(from, to, howMany) {
   this._howMany = howMany;
 }
 
+/** @internal */
 export function arrayDiff(before, after, equalFn) {
   // Find all items in both the before and after array, and represent them
   // as moves. Many of these "moves" may end up being discarded in the last

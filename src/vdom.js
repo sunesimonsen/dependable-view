@@ -1,2 +1,2 @@
-export { render, clone, combineRefs } from "./vdom-private.js";
+export { render, clone } from "./vdom-private.js";
 export { h } from "./h.js";
