@@ -11,6 +11,8 @@ A small VDOM based view layer for [@dependable/state](https://github.com/sunesim
 - Allows multiple versions of the library in the page
 - Batches updates
 
+[API documentation](https://dependable-view-api.surge.sh/modules/index.html)
+
 ## Install
 
 ```sh

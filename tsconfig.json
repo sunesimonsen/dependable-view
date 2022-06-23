@@ -1,0 +1,17 @@
+{
+  "include": [
+    "src/index.d.ts",
+    "src/h.js",
+    "src/html.js",
+    "src/vdom.d.ts",
+    "src/vdom-private.js",
+    "src/shared.ts"
+  ],
+  "compilerOptions": {
+    "allowJs": true,
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "outDir": "types",
+    "declarationMap": true
+  }
+}
