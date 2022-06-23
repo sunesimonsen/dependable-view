@@ -422,6 +422,24 @@ describe("vdom", () => {
           </div>`,
           html`<div style=${{ color: "red" }}>Hello</div>`,
         ],
+        [html`<div className="my-class">Hello</div>`, html`<div>Hello</div>`],
+        [html`<div>Hello</div>`, html`<div class="my-class">Hello</div>`],
+        [
+          html`<div className="my-class">Hello</div>`,
+          html`<div className=${false}>Hello</div>`,
+        ],
+        [
+          html`<div className=${false}>Hello</div>`,
+          html`<div className="my-class">Hello</div>`,
+        ],
+        [
+          html`<div className="my-class">Hello</div>`,
+          html`<div className>Hello</div>`,
+        ],
+        [
+          html`<div className>Hello</div>`,
+          html`<div className="my-class">Hello</div>`,
+        ],
         [
           html`
             <svg height="100" width="100">

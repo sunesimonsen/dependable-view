@@ -275,7 +275,7 @@ class PrimitiveComponent {
           if (p === "style") {
             removeStyles(this._dom.style, this._props[p]);
           }
-          this._dom.removeAttribute(p);
+          this._dom.removeAttribute(mapPropName(p));
         }
       }
     }
@@ -293,9 +293,9 @@ class PrimitiveComponent {
         } else if (p === "style") {
           setStyles(this._dom.style, value, prevValue);
         } else if (value === true) {
-          this._dom.setAttribute(p, "");
+          this._dom.setAttribute(mapPropName(p), "");
         } else if (!value) {
-          this._dom.removeAttribute(p);
+          this._dom.removeAttribute(mapPropName(p));
         } else {
           this._dom.setAttribute(mapPropName(p), value);
         }
@@ -355,7 +355,7 @@ class PrimitiveComponent {
         } else if (p === "style") {
           setStyles(this._dom.style, value);
         } else if (value === true) {
-          this._dom.setAttribute(p, "");
+          this._dom.setAttribute(mapPropName(p), "");
         } else if (value) {
           this._dom.setAttribute(mapPropName(p), value);
         }
