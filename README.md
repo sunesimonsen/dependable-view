@@ -1,7 +1,8 @@
 # @dependable/view
 
 [![Checks](https://github.com/sunesimonsen/dependable-view/workflows/CI/badge.svg)](https://github.com/sunesimonsen/dependable-view/actions?query=workflow%3ACI+branch%3Amain)
-[![Bundle Size](https://img.badgesize.io/https:/unpkg.com/@dependable/view/dist/dependable-view.esm.min.js?label=gzip&compression=gzip)](https://unpkg.com/@dependable/view/dist/dependable-view.esm.min.js)
+[![Bundle Size](https://img.badgesize.io/https:/unpkg.com/@dependable/view/dist/dependable-view-h.esm.min.js?label=h%20gzip&compression=gzip)](https://unpkg.com/@dependable/view/dist/dependable-view-h.esm.min.js)
+[![Bundle Size](https://img.badgesize.io/https:/unpkg.com/@dependable/view/dist/dependable-view-vdom.esm.min.js?label=vdom%20gzip&compression=gzip)](https://unpkg.com/@dependable/view/dist/dependable-view-vdom.esm.min.js)
 
 A small VDOM based view layer for [@dependable/state](https://github.com/sunesimonsen/dependable-state)
 
