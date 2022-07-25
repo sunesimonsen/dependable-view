@@ -140,6 +140,8 @@ class UserComponent {
       let mounting = true;
       const instance = this._instance;
 
+      instance.willMount && instance.willMount();
+
       this._tree.subscribe(this._render);
 
       this._vdom = create(
