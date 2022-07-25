@@ -303,6 +303,7 @@ describe("view", () => {
 
   describe("with a component containing life-cycle methods", () => {
     it("calls the life-cycle methods in the correct order", () => {
+      const willMountSpy = sinon.spy().named("willMount");
       const didMountSpy = sinon.spy().named("didMount");
       const didUpdateSpy = sinon.spy().named("didUpdate");
       const willUnmountSpy = sinon.spy().named("willUnmount");
@@ -313,6 +314,7 @@ describe("view", () => {
 
       class TestComponent {
         constructor(props, context) {
+          this.willMount = willMountSpy;
           this.didMount = didMountSpy;
           this.didUpdate = didUpdateSpy;
           this.willUnmount = willUnmountSpy;
@@ -363,11 +365,21 @@ describe("view", () => {
 
       expect(container, "to satisfy", `<div><!--hidden--></div>`);
 
+      visible(true);
+      flush();
+
       expect(
-        [didMountSpy, didUpdateSpy, willUnmountSpy],
+        container,
+        "to satisfy",
+        `<div><h1 title="Updated title">Hello world</h1></div>`
+      );
+
+      expect(
+        [willMountSpy, didMountSpy, didUpdateSpy, willUnmountSpy],
         "to have calls satisfying",
         () => {
           // mount
+          willMountSpy();
           didMountSpy();
 
           // message update
@@ -378,6 +390,10 @@ describe("view", () => {
 
           // visibility change
           willUnmountSpy();
+
+          // visibility change
+          willMountSpy();
+          didMountSpy();
         }
       );
     });
@@ -439,6 +455,35 @@ describe("view", () => {
         class TestComponent {
           render() {
             return html`<h1>${crashMachine()}</h1>`;
+          }
+        }
+
+        render(
+          html`<${ErrorBoundary} name="test-parent" fallback=${parentFallback}>
+            <${ErrorBoundary} name="test" fallback=${fallback}>
+              <${TestComponent} />
+            <//>
+          <//>`,
+          container
+        );
+
+        flush();
+
+        expect(
+          container,
+          "to contain elements matching",
+          "[data-test-id=failure]"
+        );
+      });
+
+      it("catches errors in willMount", () => {
+        class TestComponent {
+          willMount() {
+            throw new Error("Test failure");
+          }
+
+          render() {
+            return null;
           }
         }
 

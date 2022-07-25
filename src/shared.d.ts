@@ -90,6 +90,14 @@ export interface Component {
   render?(props: Props, context: Context): VNodes;
 
   /**
+   * Is invoked just before a component is mounted.
+   *
+   * This method is a good place to initialize any observables before the first
+   * render.
+   */
+  willMount?(): void;
+
+  /**
    * Is invoked immediately after a component is mounted.
    *
    * This method is a good place to set up any subscriptions. If you do that,
