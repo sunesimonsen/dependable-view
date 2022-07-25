@@ -131,8 +131,8 @@ describe("view", () => {
 
     describe("when the data subscription is updated with the props", () => {
       it("unsubscribes the old subscription and start listening for changes on the new data subscription", () => {
-        const mountSpy = sinon.spy();
-        const updateSpy = sinon.spy();
+        const didMountSpy = sinon.spy().named("didMount");
+        const didUpdateSpy = sinon.spy().named("didUpdate");
 
         const currentId = observable("0");
         const messages = observable({
@@ -143,8 +143,8 @@ describe("view", () => {
 
         class Message {
           constructor() {
-            this.didMount = mountSpy;
-            this.didUpdate = updateSpy;
+            this.didMount = didMountSpy;
+            this.didUpdate = didUpdateSpy;
           }
 
           render() {
@@ -170,9 +170,9 @@ describe("view", () => {
           `<div><h1 data-id="1">Updated</h1></div>`
         );
 
-        expect([mountSpy, updateSpy], "to have calls satisfying", () => {
-          mountSpy();
-          updateSpy();
+        expect([didMountSpy, didUpdateSpy], "to have calls satisfying", () => {
+          didMountSpy();
+          didUpdateSpy();
         });
       });
     });
