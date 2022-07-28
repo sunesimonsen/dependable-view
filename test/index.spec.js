@@ -1396,4 +1396,80 @@ describe("view", () => {
       expect(container, "to satisfy", "<div>Hi!, Jane Doe</div>");
     });
   });
+
+  describe("when updating an observable in a child component", () => {
+    let renderedChild, renderedParent;
+
+    beforeEach(() => {
+      const greeting = observable("Hi,");
+      renderedChild = 0;
+      renderedParent = 0;
+
+      class Child {
+        render() {
+          renderedChild++;
+          return `${greeting()} Jane Doe`;
+        }
+      }
+
+      class Parent {
+        render() {
+          renderedParent++;
+          return html`<${Child} />`;
+        }
+      }
+
+      render(html`<${Parent} />`, container);
+
+      greeting("Hello,");
+
+      flush();
+    });
+
+    it("doesn't re-render the parent component", () => {
+      expect(container, "to satisfy", `<div>Hello, Jane Doe</div>`);
+
+      expect(renderedChild, "to be", 2);
+      expect(renderedParent, "to be", 1);
+    });
+  });
+
+  describe("when updating an observable from willMount", () => {
+    let renderedChild, renderedParent;
+
+    beforeEach(() => {
+      const greeting = observable("Hi,", { id: "greeting" });
+      renderedChild = 0;
+      renderedParent = 0;
+
+      class Child {
+        render() {
+          renderedChild++;
+          return `${greeting()} Jane Doe`;
+        }
+      }
+
+      class Parent {
+        willMount() {
+          greeting("Hello,");
+        }
+
+        render() {
+          renderedParent++;
+          return html`<${Child} />`;
+        }
+      }
+
+      render(html`<${Parent} />`, container);
+
+      flush();
+    });
+
+    it("doesn't re-render the component tree", () => {
+      expect(container, "to satisfy", `<div>Hello, Jane Doe</div>`);
+
+      expect(renderedChild, "to be", 1);
+      expect(renderedParent, "to be", 1);
+    });
+  });
 });

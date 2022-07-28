@@ -1,5 +1,5 @@
 import { arrayDiff, InsertDiff, MoveDiff, RemoveDiff } from "./arrayDiff.js";
-import { computed, observable } from "@dependable/state";
+import { computed, observable, flush as flushState } from "@dependable/state";
 
 const isArray = (v) => Array.isArray(v);
 const getAnchor = (dom) => (isArray(dom) ? dom[0] : dom);
@@ -140,7 +140,10 @@ class UserComponent {
       let mounting = true;
       const instance = this._instance;
 
-      instance.willMount && instance.willMount();
+      if (instance.willMount) {
+        instance.willMount();
+        flushState();
+      }
 
       this._tree.subscribe(this._render);
 
