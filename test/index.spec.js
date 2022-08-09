@@ -1472,4 +1472,53 @@ describe("view", () => {
       expect(renderedParent, "to be", 1);
     });
   });
+
+  describe("when a component is updated after it is unmounted", () => {
+    let oddRendered, evenRendered;
+
+    beforeEach(() => {
+      oddRendered = 0;
+      evenRendered = 0;
+      const number = observable(0);
+
+      class Even {
+        render() {
+          evenRendered++;
+          return `Even number ${number()}`;
+        }
+      }
+
+      class Odd {
+        render() {
+          oddRendered++;
+          return `Odd number ${number()}`;
+        }
+      }
+
+      class Parent {
+        willMount() {
+          number(1);
+        }
+
+        render() {
+          if (number() % 2 === 0) {
+            return html`<${Even} />`;
+          } else {
+            return html`<${Odd} />`;
+          }
+        }
+      }
+
+      render(html`<${Parent} />`, container);
+      flush();
+      number(2);
+      flush();
+    });
+
+    it("ignores the update", () => {
+      expect(container, "to satisfy", `<div>Even number 2</div>`);
+      expect(evenRendered, "to be", 1);
+      expect(oddRendered, "to be", 1);
+    });
+  });
 });
