@@ -1,6 +1,11 @@
-import { create, update, mount } from "../src/vdom-private.js";
+import {
+  create,
+  update,
+  mount,
+  flush as flushDom,
+} from "../src/vdom-private.js";
 import { html } from "../src/html.js";
-import { flush } from "@dependable/state";
+import { flush as flushState } from "@dependable/state";
 import unexpected from "unexpected";
 import unexpectedDom from "unexpected-dom";
 import unexpectedCheck from "unexpected-check";
@@ -19,6 +24,7 @@ const renderIntoContainer = (vdom) => {
   } else {
     container.appendChild(dom);
   }
+  flushDom(vdom);
   return container;
 };
 
@@ -27,26 +33,26 @@ const expect = unexpected
   .use(unexpectedDom)
   .use(unexpectedCheck)
   .addAssertion("<any> to update to <any+>", (expect, ...updates) => {
+    const context = {
+      _userContext: Object.freeze({}),
+      _errorHandler: (e) => {
+        throw e;
+      },
+      _isSvg: false,
+    };
     const start = updates[0];
     const end = updates[updates.length - 1];
-    const startVDom = create(start);
-    const endVDom = create(end);
+    const startVDom = create(start, context);
+    const endVDom = create(end, context);
     const aContainer = renderIntoContainer(startVDom);
     const bContainer = renderIntoContainer(endVDom);
 
     let last = startVDom;
     updates.slice(1).forEach((vdom) => {
-      last = update(
-        vdom,
-        last,
-        (e) => {
-          throw e;
-        },
-        false
-      );
+      last = update(vdom, last, context);
     });
 
-    flush();
+    flushState();
 
     expect(aContainer, "to equal", bContainer);
   });

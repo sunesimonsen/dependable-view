@@ -1,5 +1,11 @@
 import { arrayDiff, InsertDiff, MoveDiff, RemoveDiff } from "./arrayDiff.js";
-import { computed, observable, flush as flushState } from "@dependable/state";
+
+import {
+  computed,
+  observable,
+  track,
+  flush as flushState,
+} from "@dependable/state";
 
 const isArray = (v) => Array.isArray(v);
 const getAnchor = (dom) => (isArray(dom) ? dom[0] : dom);
@@ -18,7 +24,7 @@ export const mount = (vdom) => {
   }
 };
 
-const flush = (vdom) => {
+export const flush = (vdom) => {
   if (isArray(vdom)) {
     return vdom.flatMap(flush);
   } else {
@@ -70,12 +76,11 @@ function shallowEqual(a, b) {
 }
 
 class UserComponent {
-  constructor({ type, props, children }, context, errorHandler, isSvg) {
+  constructor({ type, props, children }, context) {
     const Constructor = type;
     this._type = type;
     this._props = observable(props, { isEqual: shallowEqual });
     this._children = observable(children);
-    this._isSvg = isSvg;
     this._defaultProps = (Constructor.defaultProps || (() => ({})))();
 
     this._instanceProps = computed(() => ({
@@ -85,27 +90,23 @@ class UserComponent {
     }));
 
     const instanceProps = this._instanceProps();
-    const instance = new Constructor(instanceProps, context);
-
-    this._tree = computed(() => {
-      try {
-        const nextProps = this._instanceProps();
-        instance.props = nextProps;
-        return instance.render(nextProps, context);
-      } catch (e) {
-        this._errorHandler(e);
-      }
-    });
+    const instance = new Constructor(instanceProps, context._userContext);
 
     this._instance = instance;
-    this._context = context;
-    this._errorHandler = errorHandler;
     this._render = this._render.bind(this);
-    instance.context = context;
+    this._mounted = false;
+    this._dependencies = new Set();
+    instance.context = context._userContext;
     instance.props = instanceProps;
     if (instance.didCatch) {
       instance.didCatch = instance.didCatch.bind(instance);
     }
+
+    this._context = {
+      ...context,
+      _priority: context._priority + 1,
+      _errorHandler: instance.didCatch || context._errorHandler,
+    };
   }
 
   get _dom() {
@@ -117,27 +118,52 @@ class UserComponent {
     this._children(tree.children);
   }
 
-  _render() {
-    const instance = this._instance;
-
+  _renderVDom() {
     try {
-      this._vdom = update(
-        this._tree(),
-        this._vdom,
-        this._context,
-        instance.didCatch || this._errorHandler,
-        this._isSvg
-      );
+      let result;
 
-      instance.didUpdate && instance.didUpdate();
+      const nextProps = this._instanceProps();
+      this._instance.props = nextProps;
+      const capturedDependencies = track(() => {
+        result = this._instance.render(nextProps, this._context._userContext);
+      });
+
+      for (const dependency of this._dependencies) {
+        if (!capturedDependencies.has(dependency)) {
+          dependency.unsubscribe(this._render);
+        }
+      }
+
+      for (const dependency of capturedDependencies) {
+        dependency.subscribe(this._render, this._context._priority);
+      }
+
+      this._dependencies = capturedDependencies;
+
+      return result;
     } catch (e) {
-      this._errorHandler(e);
+      this._context._errorHandler(e);
+    }
+  }
+
+  _render() {
+    // It is possible to have a pending render, that is cancelled by unmounting
+    // the component, so we need to not execute that render.
+    if (this._mounted) {
+      const instance = this._instance;
+
+      try {
+        this._vdom = update(this._renderVDom(), this._vdom, this._context);
+
+        instance.didUpdate && instance.didUpdate();
+      } catch (e) {
+        this._context._errorHandler(e);
+      }
     }
   }
 
   _mount() {
     try {
-      let mounting = true;
       const instance = this._instance;
 
       if (instance.willMount) {
@@ -145,22 +171,14 @@ class UserComponent {
         flushState();
       }
 
-      this._tree.subscribe(this._render);
-
-      this._vdom = create(
-        this._tree(),
-        this._context,
-        instance.didCatch || this._errorHandler,
-        this._isSvg
-      );
+      this._instanceProps.subscribe(this._render, this._context._priority);
+      this._vdom = create(this._renderVDom(), this._context);
 
       const dom = mount(this._vdom);
 
-      mounting = false;
-
       return dom;
     } catch (e) {
-      this._errorHandler(e);
+      this._context._errorHandler(e);
       this._vdom = new Hidden();
       return mount(this._vdom);
     }
@@ -173,26 +191,28 @@ class UserComponent {
   _unmount() {
     const instance = this._instance;
 
-    this._tree.unsubscribe(this._render);
+    this._instanceProps.unsubscribe(this._render);
+
+    for (const dependency of this._dependencies) {
+      dependency.unsubscribe(this._render);
+    }
 
     try {
       instance.willUnmount && instance.willUnmount();
     } catch (e) {
-      this._errorHandler(e);
+      this._context._errorHandler(e);
     }
     unmount(this._vdom);
+    this._mounted = false;
   }
 
   _flush() {
     try {
       flush(this._vdom);
+      this._mounted = true;
       this._instance.didMount && this._instance.didMount();
     } catch (e) {
-      this._errorHandler(e);
-    }
-
-    if (this._queuedRender) {
-      this._render();
+      this._context._errorHandler(e);
     }
   }
 }
@@ -258,14 +278,11 @@ const removeEventListener = (dom, name, listener) => {
 };
 
 class PrimitiveComponent {
-  constructor({ type, props, children }, context, errorHandler, isSvg) {
+  constructor({ type, props, children }, context) {
     this._type = type;
     this._props = props;
     this._context = context;
-    this._errorHandler = errorHandler;
-    this._isSvg = isSvg || type === "svg";
-    this._children =
-      children && create(children, context, errorHandler, this._isSvg);
+    this._children = children && create(children, context);
   }
 
   _update(tree) {
@@ -320,28 +337,17 @@ class PrimitiveComponent {
         unmount(this._children);
         this._children = children;
       } else if (this._children === null) {
-        this._children = create(
-          children,
-          this._context,
-          this._errorHandler,
-          this._isSvg
-        );
+        this._children = create(children, this._context);
         appendChildren(this._dom, mount(this._children));
         flush(this._children);
       } else {
-        this._children = update(
-          children,
-          this._children,
-          this._context,
-          this._errorHandler,
-          this._isSvg
-        );
+        this._children = update(children, this._children, this._context);
       }
     }
   }
 
   _mount() {
-    if (this._isSvg) {
+    if (this._context._isSvg) {
       this._dom = document.createElementNS(
         "http://www.w3.org/2000/svg",
         this._type
@@ -445,12 +451,13 @@ class ContextUserComponent {
 }
 
 class ContextComponent extends UserComponent {
-  constructor({ type, props, children }, context, errorHandler, isSvg) {
+  constructor({ type, props, children }, context) {
     super(
       { type: ContextUserComponent, props, children },
-      Object.freeze({ ...context, ...props }),
-      errorHandler,
-      isSvg
+      {
+        ...context,
+        _userContext: Object.freeze({ ...context._userContext, ...props }),
+      }
     );
 
     this._type = type;
@@ -460,17 +467,12 @@ class ContextComponent extends UserComponent {
 class PortalComponent extends Hidden {
   constructor(
     { type, props: { target = document.body } = {}, children },
-    context,
-    errorHandler,
-    isSvg
+    context
   ) {
     super();
     this._type = type;
     this._context = context;
-    this._errorHandler = errorHandler;
-    this._isSvg = isSvg;
-    this._children =
-      children && create(children, context, errorHandler, this._isSvg);
+    this._children = children && create(children, context);
     this._target = target;
   }
 
@@ -482,13 +484,7 @@ class PortalComponent extends Hidden {
       appendChildren(target, getDom(this._children));
     }
 
-    this._children = update(
-      tree.children,
-      this._children,
-      this._context,
-      this._errorHandler,
-      this._isSvg
-    );
+    this._children = update(tree.children, this._children, this._context);
   }
 
   _mount() {
@@ -513,34 +509,34 @@ class PortalComponent extends Hidden {
 const isHidden = (value) =>
   value == null || value === false || (isArray(value) && !value.length);
 
-export const create = (value, context, errorHandler, isSvg) => {
+export const create = (value, context) => {
   if (isHidden(value)) {
     return new Hidden();
   }
 
   if (isArray(value)) {
-    return value.map((item) => create(item, context, errorHandler, isSvg));
+    return value.map((item) => create(item, context));
   }
 
   if (typeof value.type === "function") {
     try {
-      return new UserComponent(value, context, errorHandler, isSvg);
+      return new UserComponent(value, context);
     } catch (e) {
-      errorHandler(e);
+      context._errorHandler(e);
       return new Hidden();
     }
   }
 
   if (typeof value === "object") {
     if (value.type === "Context") {
-      return new ContextComponent(value, context, errorHandler, isSvg);
+      return new ContextComponent(value, context);
     }
 
     if (value.type === "Portal") {
-      return new PortalComponent(value, context, errorHandler, isSvg);
+      return new PortalComponent(value, context);
     }
 
-    return new PrimitiveComponent(value, context, errorHandler, isSvg);
+    return new PrimitiveComponent(value, context);
   }
 
   return new Text(String(value));
@@ -554,7 +550,7 @@ const hasKey = (value) =>
 const similar = (a, b) =>
   a._type === b.type && getKey(a._props) === getKey(b.props);
 
-const updateKeyedArray = (updatedTree, vdom, context, errorHandler, isSvg) => {
+const updateKeyedArray = (updatedTree, vdom, context) => {
   const updatedByKey = new Map();
   updatedTree.forEach((child) => {
     updatedByKey.set(getKey(child.props), child);
@@ -564,7 +560,7 @@ const updateKeyedArray = (updatedTree, vdom, context, errorHandler, isSvg) => {
     const key = getKey(oldChild._props);
     if (updatedByKey.has(key)) {
       const newChild = updatedByKey.get(key);
-      update(newChild, oldChild, context, errorHandler, isSvg);
+      update(newChild, oldChild, context);
     }
   });
 
@@ -586,9 +582,7 @@ const updateKeyedArray = (updatedTree, vdom, context, errorHandler, isSvg) => {
   diff.forEach((update) => {
     if (update instanceof InsertDiff) {
       const anchor = vdom[update._index];
-      const newValues = update._values.map((child) =>
-        create(child, context, errorHandler, isSvg)
-      );
+      const newValues = update._values.map((child) => create(child, context));
       const dom = mount(newValues);
       insertBefore(dom, anchor);
       vdom.splice(update._index, 0, ...newValues);
@@ -608,26 +602,26 @@ const updateKeyedArray = (updatedTree, vdom, context, errorHandler, isSvg) => {
   return vdom;
 };
 
-const updateArray = (updatedTree, vdom, context, errorHandler, isSvg) => {
+const updateArray = (updatedTree, vdom, context) => {
   if (hasKey(updatedTree[0]) && hasKey(vdom[0])) {
-    return updateKeyedArray(updatedTree, vdom, context, errorHandler, isSvg);
+    return updateKeyedArray(updatedTree, vdom, context);
   }
 
   if (updatedTree.length && updatedTree.length === vdom.length) {
     for (let i = 0; i < updatedTree.length; i++) {
-      vdom[i] = update(updatedTree[i], vdom[i], context, errorHandler, isSvg);
+      vdom[i] = update(updatedTree[i], vdom[i], context);
     }
     return vdom;
   }
 
-  const newVdom = create(updatedTree, context, errorHandler, isSvg);
+  const newVdom = create(updatedTree, context);
   vdom[0]._insertBefore(mount(newVdom));
   unmount(vdom);
   flush(newVdom);
   return newVdom;
 };
 
-export const update = (updatedTree, vdom, context, errorHandler, isSvg) => {
+export const update = (updatedTree, vdom, context) => {
   if (vdom._type === "hidden" && isHidden(updatedTree)) {
     return vdom;
   }
@@ -646,10 +640,10 @@ export const update = (updatedTree, vdom, context, errorHandler, isSvg) => {
   }
 
   if (isArray(updatedTree) && updatedTree.length && isArray(vdom)) {
-    return updateArray(updatedTree, vdom, context, errorHandler, isSvg);
+    return updateArray(updatedTree, vdom, context);
   }
 
-  const newVdom = create(updatedTree, context, errorHandler, isSvg);
+  const newVdom = create(updatedTree, context);
   getAnchor(vdom)._insertBefore(mount(newVdom));
   unmount(vdom);
   flush(newVdom);
@@ -671,7 +665,12 @@ const reThrow = (e) => {
  */
 export const render = (vnodes, container = document.body, context = {}) => {
   removeChildren(container);
-  const vdom = create(vnodes, Object.freeze(context), reThrow, false);
+  const vdom = create(vnodes, {
+    _userContext: Object.freeze(context),
+    _errorHandler: reThrow,
+    _isSvg: false,
+    _priority: 0,
+  });
   appendChildren(container, mount(vdom));
   flush(vdom);
 };
