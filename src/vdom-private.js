@@ -281,8 +281,8 @@ class PrimitiveComponent {
   constructor({ type, props, children }, context) {
     this._type = type;
     this._props = props;
-    this._children = children && create(children, context);
     this._context = type === "svg" ? { ...context, _isSvg: true } : context;
+    this._children = children && create(children, this._context);
   }
 
   _update(tree) {

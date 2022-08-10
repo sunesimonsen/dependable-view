@@ -1540,7 +1540,9 @@ describe("view", () => {
     );
 
     const svg = container.querySelector("svg");
+    const circle = container.querySelector("circle");
 
     expect(svg.namespaceURI, "to equal", "http://www.w3.org/2000/svg");
+    expect(circle.namespaceURI, "to equal", "http://www.w3.org/2000/svg");
   });
 });
