@@ -1521,4 +1521,26 @@ describe("view", () => {
       expect(oddRendered, "to be", 1);
     });
   });
+
+  it("renders SVGs in the correct namespace", () => {
+    render(
+      html`
+        <svg height="100" width="100">
+          <circle
+            cx="50"
+            cy="50"
+            r="40"
+            stroke="black"
+            stroke-width="3"
+            fill="red"
+          />
+        </svg>
+      `,
+      container
+    );
+
+    const svg = container.querySelector("svg");
+
+    expect(svg.namespaceURI, "to equal", "http://www.w3.org/2000/svg");
+  });
 });
