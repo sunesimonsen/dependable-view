@@ -21,7 +21,7 @@ A small VDOM based view layer for [@dependable/state](https://github.com/sunesim
 npm install --save @dependable/view
 
 # yarn
-npm add @dependable/view
+yarn add @dependable/view
 ```
 
 ## Usage
