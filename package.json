@@ -46,7 +46,7 @@
     "node": ">=16"
   },
   "dependencies": {
-    "@dependable/state": "^0.8.0",
+    "@dependable/state": "^0.12.0",
     "htm": "^3.1.1"
   },
   "devDependencies": {

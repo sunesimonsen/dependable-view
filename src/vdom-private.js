@@ -79,7 +79,7 @@ class UserComponent {
   constructor({ type, props, children }, context) {
     const Constructor = type;
     this._type = type;
-    this._props = observable(props, { isEqual: shallowEqual });
+    this._props = observable(props);
     this._children = observable(children);
     this._defaultProps = (Constructor.defaultProps || (() => ({})))();
 
@@ -114,8 +114,12 @@ class UserComponent {
   }
 
   _update(tree) {
-    this._props(tree.props);
-    this._children(tree.children);
+    if (!shallowEqual(this._props(), tree.props)) {
+      this._props(tree.props);
+    }
+    if (this._children() !== tree.children) {
+      this._children(tree.children);
+    }
   }
 
   _renderVDom() {
