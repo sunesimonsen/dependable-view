@@ -50,7 +50,7 @@
     "node": ">=16"
   },
   "dependencies": {
-    "@dependable/state": "^0.15.0",
+    "@dependable/state": "^0.16.0",
     "htm": "^3.1.1"
   },
   "devDependencies": {
