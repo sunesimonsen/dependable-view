@@ -11,11 +11,7 @@
     "./html": "./src/html.js"
   },
   "types": "./types/index.d.ts",
-  "files": [
-    "dist",
-    "src",
-    "types"
-  ],
+  "files": ["dist", "src", "types"],
   "keywords": [
     "dependable",
     "vdom",
@@ -50,7 +46,7 @@
     "node": ">=16"
   },
   "dependencies": {
-    "@dependable/state": "^0.16.0",
+    "@dependable/state": "^0.17.0",
     "htm": "^3.1.1"
   },
   "devDependencies": {
