@@ -79,8 +79,8 @@ class UserComponent {
   constructor({ type, props, children }, context) {
     const Constructor = type;
     this._type = type;
-    this._props = observable(props, { restore: false });
-    this._children = observable(children, { restore: false });
+    this._props = observable(props);
+    this._children = observable(children);
     this._defaultProps = (Constructor.defaultProps || (() => ({})))();
 
     this._instanceProps = computed(() => ({
