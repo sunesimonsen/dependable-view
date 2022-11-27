@@ -8,7 +8,7 @@ import {
 } from "@dependable/state";
 
 const isArray = (v) => Array.isArray(v);
-const getAnchor = (dom) => (isArray(dom) ? dom[0] : dom);
+const getAnchor = (dom) => (isArray(dom) ? getAnchor(dom[0]) : dom);
 
 const removeChildren = (container) => {
   while (container.firstChild) {
@@ -619,7 +619,7 @@ const updateArray = (updatedTree, vdom, context) => {
   }
 
   const newVdom = create(updatedTree, context);
-  vdom[0]._insertBefore(mount(newVdom));
+  getAnchor(vdom)._insertBefore(mount(newVdom));
   unmount(vdom);
   flush(newVdom);
   return newVdom;

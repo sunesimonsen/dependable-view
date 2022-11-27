@@ -126,6 +126,13 @@ describe("vdom", () => {
           html`<img src="https://www.example.com" />`,
         ],
         [html`<h1>Hello</h1>`, html`<h1>world</h1>`],
+        [html` <h1>Hello</h1> `, html` <h2>world</h2> `],
+        [
+          html`
+            <${Childish}>${[html` <h1>Hello</h1> `, html` <p>bla bla</p> `]}<//>
+          `,
+          html`<${Childish}>${[html` <h1>world</h1> `]}<//>`,
+        ],
         [html`<h1>Hello</h1>`, 42],
         [html`<h1>Hello</h1>`, html`<h1>Hello ${42}</h1>`],
         [html`<h1>Hello</h1>`, html`<h2>world</h2>`],
@@ -501,6 +508,30 @@ describe("vdom", () => {
             </svg>
           `,
           html`<span>Something else</span>`,
+        ],
+        [
+          {
+            type: Childish,
+            props: {},
+            children: [
+              [
+                "Hello",
+                html`<${Childish}><p>beautiful</p></${Childish}>`,
+                "world",
+              ],
+            ],
+          },
+          html`
+            <${Childish}>
+              ${[
+                [
+                  html`<p>Hello</p>`,
+                  html`<${Childish}><p>beautiful</p></${Childish}>`,
+                  html`<p>world!</p>`,
+                ],
+              ]}
+            </${Childish}>
+          `,
         ],
       ].forEach(([a, ...updates]) => {
         expect(a, "to update to", ...updates);
