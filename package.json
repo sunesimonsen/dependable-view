@@ -1,7 +1,7 @@
 {
   "type": "module",
   "name": "@dependable/view",
-  "version": "0.14.1",
+  "version": "0.15.0",
   "description": "View layer for @dependable/state",
   "sideEffects": false,
   "module": "./src/state.js",
