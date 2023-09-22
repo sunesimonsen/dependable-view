@@ -121,6 +121,13 @@ export interface Component {
   didUpdate?(): void;
 
   /**
+   * Is invoked after each render.
+   *
+   * This method is a good place to invoke loading of data, or operate on the rendered DOM.
+   */
+  didRender?(): void;
+
+  /**
    * This lifecycle is invoked after an error has been thrown by a descendant component.
    *
    * @param error the error that was thrown.
