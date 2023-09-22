@@ -160,6 +160,7 @@ class UserComponent {
         this._vdom = update(this._renderVDom(), this._vdom, this._context);
 
         instance.didUpdate && instance.didUpdate();
+        instance.didRender && instance.didRender();
       } catch (e) {
         this._context._errorHandler(e);
       }
@@ -215,6 +216,7 @@ class UserComponent {
       flush(this._vdom);
       this._mounted = true;
       this._instance.didMount && this._instance.didMount();
+      this._instance.didRender && this._instance.didRender();
     } catch (e) {
       this._context._errorHandler(e);
     }

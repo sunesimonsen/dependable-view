@@ -305,6 +305,7 @@ describe("view", () => {
     it("calls the life-cycle methods in the correct order", () => {
       const willMountSpy = sinon.spy().named("willMount");
       const didMountSpy = sinon.spy().named("didMount");
+      const didRenderSpy = sinon.spy().named("didRender");
       const didUpdateSpy = sinon.spy().named("didUpdate");
       const willUnmountSpy = sinon.spy().named("willUnmount");
 
@@ -316,6 +317,7 @@ describe("view", () => {
         constructor(props, context) {
           this.willMount = willMountSpy;
           this.didMount = didMountSpy;
+          this.didRender = didRenderSpy;
           this.didUpdate = didUpdateSpy;
           this.willUnmount = willUnmountSpy;
         }
@@ -381,12 +383,15 @@ describe("view", () => {
           // mount
           willMountSpy();
           didMountSpy();
+          didRenderSpy();
 
           // message update
           didUpdateSpy();
+          didRenderSpy();
 
           // title update (props)
           didUpdateSpy();
+          didRenderSpy();
 
           // visibility change
           willUnmountSpy();
@@ -394,6 +399,7 @@ describe("view", () => {
           // visibility change
           willMountSpy();
           didMountSpy();
+          didRenderSpy();
         }
       );
     });
