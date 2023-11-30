@@ -696,5 +696,5 @@ export const clone = (element, overrides) => ({
     ...element.props,
     ...overrides?.props,
   },
-  children: overrides?.children || node.children,
+  children: overrides?.children || element.children,
 });
