@@ -20,7 +20,7 @@ const minifyPlugins = [
   }),
 ];
 
-const builds = ["vdom", "html", "h"].flatMap((name) => [
+const builds = ["index", "vdom", "html", "h"].flatMap((name) => [
   {
     input: `src/${name}.js`,
     output: {
