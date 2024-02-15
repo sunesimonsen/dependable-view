@@ -234,7 +234,7 @@ const setStyles = (style, value, prevValue) => {
 
     for (const name in value) {
       if (!hasPrevValue || value[name] !== prevValue[name]) {
-        style[name] = value[name];
+        style.setProperty(name, value[name]);
       }
     }
   }
