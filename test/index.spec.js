@@ -641,6 +641,59 @@ describe("view", () => {
     });
   });
 
+  describe("when using inline styles", () => {
+    it("allows setting inline style on the element as a string", () => {
+      render(
+        html`<span style="background: red; color: blue">I'm red</span>`,
+        container
+      );
+
+      expect(
+        container,
+        "to exhaustively satisfy",
+        `<div><span style="background: red; color: blue">I'm red</span></div>`
+      );
+    });
+
+    it("allows setting inline style on the element as an object", () => {
+      render(
+        html`<span style=${{ background: "red", color: "blue" }}
+          >I'm red</span
+        >`,
+        container
+      );
+
+      expect(
+        container,
+        "to exhaustively satisfy",
+        `<div><span style="background: red; color: blue">I'm red</span></div>`
+      );
+    });
+
+    it("allows setting inline css variables as a string", () => {
+      render(html`<span style="--my-variable: 42">I'm red</span>`, container);
+
+      expect(
+        container,
+        "to exhaustively satisfy",
+        `<div><span style="--my-variable: 42">I'm red</span></div>`
+      );
+    });
+
+    it("allows setting inline css variables as an object", () => {
+      render(
+        html`<span style=${{ "--my-variable": 42 }}>I'm red</span>`,
+        container
+      );
+
+      expect(
+        container,
+        "to exhaustively satisfy",
+        `<div><span style="--my-variable: 42">I'm red</span></div>`
+      );
+    });
+  });
+
   describe("when using ref-props", () => {
     it("calls the ref, when the element is mounted", () => {
       class TestComponent {
