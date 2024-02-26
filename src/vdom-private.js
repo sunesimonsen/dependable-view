@@ -548,7 +548,8 @@ export const create = (value, context) => {
   return new Text(String(value));
 };
 
-const getKey = (props) => props && props.key;
+const getKey = (props) =>
+  props && (typeof props === "function" ? props().key : props.key);
 
 const hasKey = (value) =>
   value && typeof getKey(value.props || value._props) !== "undefined";
