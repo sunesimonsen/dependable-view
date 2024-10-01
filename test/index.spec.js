@@ -769,7 +769,7 @@ describe("view", () => {
 
       const button = container.querySelector("button");
 
-      button.dispatchEvent(new CustomEvent("click"));
+      button.dispatchEvent(new window.CustomEvent("click"));
 
       expect(listener, "to have calls satisfying", () => {
         listener({ type: "click", target: button });
@@ -799,12 +799,12 @@ describe("view", () => {
 
         const button = container.querySelector("button");
 
-        button.dispatchEvent(new CustomEvent("click"));
+        button.dispatchEvent(new window.CustomEvent("click"));
 
         listenerName("new");
         flush();
 
-        button.dispatchEvent(new CustomEvent("click"));
+        button.dispatchEvent(new window.CustomEvent("click"));
 
         expect([oldListener, newListener], "to have calls satisfying", () => {
           oldListener({ type: "click", target: button });
@@ -831,12 +831,12 @@ describe("view", () => {
 
         const button = container.querySelector("button");
 
-        button.dispatchEvent(new CustomEvent("click"));
+        button.dispatchEvent(new window.CustomEvent("click"));
 
         enabled(false);
         flush();
 
-        button.dispatchEvent(new CustomEvent("click"));
+        button.dispatchEvent(new window.CustomEvent("click"));
 
         expect(listener, "to have calls satisfying", () => {
           listener({ type: "click", target: button });
@@ -862,12 +862,12 @@ describe("view", () => {
 
         const button = container.querySelector("button");
 
-        button.dispatchEvent(new CustomEvent("click"));
+        button.dispatchEvent(new window.CustomEvent("click"));
 
         enabled(false);
         flush();
 
-        button.dispatchEvent(new CustomEvent("click"));
+        button.dispatchEvent(new window.CustomEvent("click"));
 
         expect(listener, "to have calls satisfying", () => {
           listener({ type: "click", target: button });
@@ -892,7 +892,7 @@ describe("view", () => {
 
       const button = container.querySelector("button");
 
-      button.dispatchEvent(new CustomEvent("click", { bubbles: true }));
+      button.dispatchEvent(new window.CustomEvent("click", { bubbles: true }));
 
       expect(captureListener, "to have calls satisfying", () => {
         captureListener({ type: "click", target: button });
@@ -922,12 +922,12 @@ describe("view", () => {
 
         const button = container.querySelector("button");
 
-        button.dispatchEvent(new CustomEvent("click"));
+        button.dispatchEvent(new window.CustomEvent("click"));
 
         listenerName("new");
         flush();
 
-        button.dispatchEvent(new CustomEvent("click"));
+        button.dispatchEvent(new window.CustomEvent("click"));
 
         expect([oldListener, newListener], "to have calls satisfying", () => {
           oldListener({ type: "click", target: button });
@@ -954,12 +954,12 @@ describe("view", () => {
 
         const button = container.querySelector("button");
 
-        button.dispatchEvent(new CustomEvent("click"));
+        button.dispatchEvent(new window.CustomEvent("click"));
 
         enabled(false);
         flush();
 
-        button.dispatchEvent(new CustomEvent("click"));
+        button.dispatchEvent(new window.CustomEvent("click"));
 
         expect(listener, "to have calls satisfying", () => {
           listener({ type: "click", target: button });
@@ -985,12 +985,12 @@ describe("view", () => {
 
         const button = container.querySelector("button");
 
-        button.dispatchEvent(new CustomEvent("click"));
+        button.dispatchEvent(new window.CustomEvent("click"));
 
         enabled(false);
         flush();
 
-        button.dispatchEvent(new CustomEvent("click"));
+        button.dispatchEvent(new window.CustomEvent("click"));
 
         expect(listener, "to have calls satisfying", () => {
           listener({ type: "click", target: button });
