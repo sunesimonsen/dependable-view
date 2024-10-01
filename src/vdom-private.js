@@ -225,29 +225,20 @@ class UserComponent {
 
 const propWithoutDot = (p) => p.slice(1);
 
-const setStyles = (style, value, prevValue) => {
+const setStyles = (style, value) => {
   if (typeof value === "string") {
     style.cssText = value;
   } else {
-    const hasPrevValue = typeof prevValue !== "string" && prevValue;
     style.cssText = "";
 
     for (const name in value) {
-      if (!hasPrevValue || value[name] !== prevValue[name]) {
-        style.setProperty(name, value[name]);
-      }
+      style.setProperty(name, value[name]);
     }
   }
 };
 
-const removeStyles = (style, value) => {
-  if (typeof value === "string") {
-    style.cssText = "";
-  } else {
-    for (const name in value) {
-      style[name] = "";
-    }
-  }
+const removeStyles = (style) => {
+  style.cssText = "";
 };
 
 const captureRegex = /Capture$/;
@@ -301,7 +292,7 @@ class PrimitiveComponent {
           removeEventListener(this._dom, p, value);
         } else if (p[0] !== ".") {
           if (p === "style") {
-            removeStyles(this._dom.style, this._props[p]);
+            removeStyles(this._dom.style);
           }
           this._dom.removeAttribute(mapPropName(p));
         }
@@ -319,7 +310,7 @@ class PrimitiveComponent {
         } else if (p[0] === ".") {
           this._dom[propWithoutDot(p)] = value;
         } else if (p === "style") {
-          setStyles(this._dom.style, value, prevValue);
+          setStyles(this._dom.style, value);
         } else if (value === true) {
           this._dom.setAttribute(mapPropName(p), "");
         } else if (!value) {

@@ -425,6 +425,10 @@ describe("vdom", () => {
         ],
         [
           html`<div style=${{ color: "red" }}>Hello</div>`,
+          html`<div style=${{ color: "red" }}>Hello</div>`,
+        ],
+        [
+          html`<div style=${{ color: "red" }}>Hello</div>`,
           html`<div style=${{ color: "white", backgroundColor: "black" }}>
             Hello
           </div>`,
