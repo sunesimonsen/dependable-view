@@ -243,16 +243,6 @@ const setStyles = (style, value, prevValue) => {
   }
 };
 
-const removeStyles = (style, value) => {
-  if (typeof value === "string") {
-    style.cssText = "";
-  } else {
-    for (const name in value) {
-      style.removeProperty(name);
-    }
-  }
-};
-
 const captureRegex = /Capture$/;
 const eventPropRegex = /^on/;
 
@@ -304,7 +294,7 @@ class PrimitiveComponent {
           removeEventListener(this._dom, p, value);
         } else if (p[0] !== ".") {
           if (p === "style") {
-            removeStyles(this._dom.style, this._props[p]);
+            this._dom.style.cssText = "";
           }
           this._dom.removeAttribute(mapPropName(p));
         }
