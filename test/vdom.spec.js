@@ -4,7 +4,7 @@ import {
   mount,
   flush as flushDom,
 } from "../src/vdom-private.js";
-import { html } from "../src/html.js";
+import { h } from "../src/h.js";
 import { flush as flushState } from "@dependable/state";
 import unexpected from "unexpected";
 import unexpectedDom from "unexpected-dom";
@@ -59,26 +59,23 @@ const expect = unexpected
 
 class Title {
   render({ children }) {
-    return html`<h1>${children}</h1>`;
+    return h("h1", {}, children);
   }
 }
 
 class Box {
   render({ title, children }) {
-    return html`<div className="box">
-      <${Title}>${title}<//>
-      <div className="body">${children}</div>
-    </div>`;
+    return h(
+      "div",
+      { className: "box" },
+      h(Title, {}, title),
+      h("div", { className: "body" }, children)
+    );
   }
 }
-
 class Numbers {
   render() {
-    return html`
-      <li>one</li>
-      <li>two</li>
-      <li>three</li>
-    `;
+    return [h("li", {}, "one"), h("li", {}, "two"), h("li", {}, "three")];
   }
 }
 
@@ -102,440 +99,380 @@ describe("vdom", () => {
         ["Hello", 42],
         ["Hello", 42, 43],
         ["Hello", false, "World"],
-        [null, html`<${Childish}>Hello<//>`],
-        [null, html`<${Childish}>Hello<//>`],
-        [html`<${Childish}>Hello<//>`, false, html`<${Childish}>World<//>`],
-        [html`<${Childish}>Hello<//>`, null, html`<${Childish}>World<//>`],
+        [null, h(Childish, {}, "Hello")],
+        [null, h(Childish, {}, "Hello")],
+        [h(Childish, {}, "Hello"), false, h(Childish, {}, "World")],
+        [h(Childish, {}, "Hello"), null, h(Childish, {}, "World")],
         [
-          html`<${Childish}>${"Hello"}<//>`,
-          html`<${Childish}>${null}<//>`,
-          html`<${Childish}>${"World"}<//>`,
+          h(Childish, {}, "Hello"),
+          h(Childish, {}, null),
+          h(Childish, {}, "World"),
         ],
         [
-          html`<${Childish}
-            ><span key="0">${"Hello"}</span><span key="1">world</span><//
-          >`,
-          html`<${Childish}>${null}<span key="1">world</span><//>`,
-          html`<${Childish}
-            ><span key="0">${"H3110"}</span><span key="1">world</span><//
-          >`,
+          h(
+            Childish,
+            {},
+            h("span", { key: "0" }, "Hello"),
+            h("span", { key: "1" }, "world")
+          ),
+          h(Childish, {}, null, h("span", { key: "1" }, "world")),
+          h(
+            Childish,
+            {},
+            h("span", { key: "0" }, "H3110"),
+            h("span", { key: "1" }, "world")
+          ),
         ],
-        ["Hello", html`<img src="https://example.com" />`],
+        ["Hello", h("img", { src: "https://example.com" })],
         [
-          html`<img src="https://example.com" />`,
-          html`<img src="https://www.example.com" />`,
+          h("img", { src: "https://example.com" }),
+          h("img", { src: "https://www.example.com" }),
         ],
-        [html`<h1>Hello</h1>`, html`<h1>world</h1>`],
-        [html` <h1>Hello</h1> `, html` <h2>world</h2> `],
+        [h("h1", {}, "Hello"), h("h1", {}, "world")],
         [
-          html`
-            <${Childish}>${[html` <h1>Hello</h1> `, html` <p>bla bla</p> `]}<//>
-          `,
-          html`<${Childish}>${[html` <h1>world</h1> `]}<//>`,
-        ],
-        [html`<h1>Hello</h1>`, 42],
-        [html`<h1>Hello</h1>`, html`<h1>Hello ${42}</h1>`],
-        [html`<h1>Hello</h1>`, html`<h2>world</h2>`],
-        [html`<h1>Hello</h1>`, html`<h2>${"world"}</h2>`],
-        [html`<h1>${"Hello"}</h1>`, html`<h2>${"world"}</h2>`],
-        [html`<h1>${""}</h1>`, html`<h2>${"Hello"}</h2>`],
-        [html`<h1>${"Hello"}</h1>`, html`<h2>${""}</h2>`],
-        [html`<h1>${false}</h1>`, html`<h2>${"Hello"}</h2>`],
-        [html`<h1></h1>`, html`<h2>${"Hello"}</h2>`],
-        [
-          html`<input type="checkbox" checked />`,
-          html`<input type="checkbox" />`,
+          [" ", h("h1", {}, "Hello"), " "],
+          [" ", h("h2", {}, "world"), " "],
         ],
         [
-          html`<input type="checkbox" />`,
-          html`<input type="checkbox" checked />`,
+          h(Childish, {}, [
+            [" ", h("h1", {}, "Hello"), " "],
+            [" ", h("p", {}, "bla bla"), " "],
+          ]),
+          h(Childish, {}, [[" ", h("h1", {}, "world"), " "]]),
+        ],
+        [h("h1", {}, "Hello"), 42],
+        [h("h1", {}, "Hello"), h("h1", {}, "Hello ", 42)],
+        [h("h1", {}, "Hello"), h("h2", {}, "world")],
+        [h("h1", {}, "Hello"), h("h2", {}, "world")],
+        [h("h1", {}, "Hello"), h("h2", {}, "world")],
+        [h("h1", {}, ""), h("h2", {}, "Hello")],
+        [h("h1", {}, "Hello"), h("h2", {}, "")],
+        [h("h1", {}, false), h("h2", {}, "Hello")],
+        [h("h1"), h("h2", {}, "Hello")],
+        [
+          h("input", { type: "checkbox", checked: true }),
+          h("input", { type: "checkbox" }),
         ],
         [
-          html`<input type="checkbox" checked />`,
-          html`<input type="checkbox" checked=${false} />`,
-        ],
-        [html`<${Title}>Hello<//>`, html`<${Title}>world<//>`],
-        [html`<${Title}>Hello<//>`, html`<${Title}><span>world</span><//>`],
-        [
-          html`<${Title}>Hello<//>`,
-          html`<${Title}>Hello <span>world</span><//>`,
-        ],
-        [html`<${Title}>Hello<//>`, html`<h1>Hello</h1>`],
-        [
-          html`<${Box} title="Hello"><em>content</em><//>`,
-          html`<h1>Hello</h1>`,
+          h("input", { type: "checkbox" }),
+          h("input", { type: "checkbox", checked: true }),
         ],
         [
-          html`<div><span>something</span><${Title}>Hello<//></div>`,
-          html`<div>
-            <span>something</span>
-            <h1>Hello</h1>
-          </div>`,
+          h("input", { type: "checkbox", checked: true }),
+          h("input", { type: "checkbox", checked: false }),
+        ],
+        [h(Title, {}, "Hello"), h(Title, {}, "world")],
+        [h(Title, {}, "Hello"), h(Title, {}, h("span", {}, "world"))],
+        [h(Title, {}, "Hello"), h(Title, {}, "Hello ", h("span", {}, "world"))],
+        [h(Title, {}, "Hello"), h("h1", {}, "Hello")],
+        [
+          h(Box, { title: "Hello" }, h("em", {}, "content")),
+          h("h1", {}, "Hello"),
         ],
         [
-          html`<div>
-            <span>something</span>
-            <h1>Hello</h1>
-          </div>`,
-          html`<div><span>something</span><${Title}>Hello<//></div>`,
+          h("div", {}, h("span", {}, "something"), h(Title, {}, "Hello")),
+          h("div", {}, h("span", {}, "something"), h("h1", {}, "Hello")),
         ],
         [
-          html`<div>Hello</div>`,
-          html`<span>one</span><span>two</span><span>three</span>`,
+          h("div", {}, h("span", {}, "something"), h("h1", {}, "Hello")),
+          h("div", {}, h("span", {}, "something"), h(Title, {}, "Hello")),
         ],
         [
-          html`<span>one</span><span>two</span><span>three</span>`,
-          html`<div>Hello</div>`,
+          h("div", {}, "Hello"),
+          [h("span", {}, "one"), h("span", {}, "two"), h("span", {}, "three")],
         ],
         [
-          html`<ul>
-            <${Numbers} />
-          </ul>`,
-          html`<ul>
-            <li>zero</li>
-            <${Numbers} />
-          </ul>`,
+          [h("span", {}, "one"), h("span", {}, "two"), h("span", {}, "three")],
+          h("div", {}, "Hello"),
+        ],
+        [h("ul", {}, h(Numbers)), h("ul", {}, h("li", {}, "zero"), h(Numbers))],
+        [h("ul", {}, h("li", {}, "zero"), h(Numbers)), h("ul", {}, h(Numbers))],
+        [h("ul", {}, h(Numbers)), h("ul", {}, h(Numbers), h("li", {}, "four"))],
+        [h("ul", {}, h(Numbers), h("li", {}, "four")), h("ul", {}, h(Numbers))],
+        [h(Childish), h(Childish, {}, h("span", {}, "0"))],
+        [h(Childish, {}, h("span", {}, "0")), h(Childish)],
+        [
+          h(Childish, {}, h("span", { key: "0" }, "0")),
+          h(
+            Childish,
+            {},
+            h("span", { key: "0" }, "0"),
+            h("span", { key: "1" }, "1")
+          ),
         ],
         [
-          html`<ul>
-            <li>zero</li>
-            <${Numbers} />
-          </ul>`,
-          html`<ul>
-            <${Numbers} />
-          </ul>`,
+          h(Childish, {}, h(Title, { key: "0" }, "0")),
+          h(
+            Childish,
+            {},
+            h(Title, { key: "0" }, "0"),
+            h(Title, { key: "1" }, "1")
+          ),
         ],
         [
-          html`<ul>
-            <${Numbers} />
-          </ul>`,
-          html`<ul>
-            <${Numbers} />
-            <li>four</li>
-          </ul>`,
+          h("ul", {}, h(Numbers, { key: "0" })),
+          h(
+            "ul",
+            {},
+            h(Numbers, { key: "0" }),
+            h(Childish, {}, h("li", {}, "four"))
+          ),
+        ],
+        [h("ul"), h("ul", {}, h("li", {}, "0"), h("li", {}, "1"))],
+        [h("ul", {}, h("li", {}, "0"), h("li", {}, "1")), h("ul")],
+        [
+          h("ul", {}, h("li", {}, "0"), h("li", {}, "1"), h("li", {}, "2")),
+          h("ul", {}, h("li", {}, "0"), h("li", {}, "1"), false),
         ],
         [
-          html`<ul>
-            <${Numbers} />
-            <li>four</li>
-          </ul>`,
-          html`<ul>
-            <${Numbers} />
-          </ul>`,
-        ],
-        [html`<${Childish}><//>`, html`<${Childish}><span>0</span><//>`],
-        [html`<${Childish}><span>0</span><//>`, html`<${Childish}><//>`],
-        [
-          html`<${Childish}><span key="0">0</span><//>`,
-          html`<${Childish}><span key="0">0</span><span key="1">1</span><//>`,
+          h("ul", {}, h("li", {}, "0"), h("li", {}, "1"), h("li", {}, "2")),
+          h("ul", {}, null),
         ],
         [
-          html`<${Childish}><${Title} key="0">0<//><//>`,
-          html`<${Childish}><${Title} key="0">0<//><${Title} key="1">1<//><//>`,
+          h("ul", {}, h("li", {}, "0"), h("li", {}, "1"), h("li", {}, "2")),
+          h("ul"),
         ],
         [
-          html`<ul>
-            <${Numbers} key="0" />
-          </ul>`,
-          html`<ul>
-            <${Numbers} key="0" />
-            <${Childish}><li>four</li><//>
-          </ul>`,
+          h(
+            "ul",
+            {},
+            h("li", { key: "0" }, "0"),
+            h("li", { key: "1" }, "1"),
+            h("li", { key: "2" }, "2")
+          ),
+          h("ul", {}, null),
         ],
         [
-          html`<ul></ul>`,
-          html`<ul>
-            <li>0</li>
-            <li>1</li>
-          </ul>`,
+          h("ul"),
+          h("ul", {}, h("li", { key: "1" }, "1"), h("li", { key: "0" }, "0")),
         ],
         [
-          html`<ul>
-            <li>0</li>
-            <li>1</li>
-          </ul>`,
-          html`<ul></ul>`,
+          h("ul"),
+          h("ul", {}, h("li", { key: "1" }, "1"), h("li", { key: "0" }, "0")),
         ],
         [
-          html`<ul>
-            <li>0</li>
-            <li>1</li>
-            <li>2</li>
-          </ul>`,
-          html`<ul>
-            <li>0</li>
-            <li>1</li>
-            ${false}
-          </ul>`,
+          h("ul", {}, h("li", { key: "0" }, "0"), h("li", { key: "1" }, "1")),
+          h(
+            "ul",
+            {},
+            h("li", { key: "0" }, "0"),
+            h("li", { key: "1" }, "1"),
+            h("li", { key: "2" }, "2")
+          ),
         ],
         [
-          html`<ul>
-            <li>0</li>
-            <li>1</li>
-            <li>2</li>
-          </ul>`,
-          html`<ul>
-            ${null}
-          </ul>`,
+          h(
+            "ul",
+            {},
+            h("li", { key: "0" }, "0"),
+            h("li", { key: "1" }, "1"),
+            h(Numbers, { key: "3" })
+          ),
+          h(
+            "ul",
+            {},
+            h("li", { key: "0" }, "0"),
+            h("li", { key: "1" }, "1"),
+            h("li", { key: "2" }, "2"),
+            h(Numbers, { key: "3" })
+          ),
         ],
         [
-          html`<ul>
-            <li>0</li>
-            <li>1</li>
-            <li>2</li>
-          </ul>`,
-          html`<ul>
-            ${[]}
-          </ul>`,
+          h(
+            "ul",
+            {},
+            h("li", { key: "0" }, "0"),
+            h("li", { key: "1" }, "1"),
+            h("li", { key: "2" }, "2")
+          ),
+          h("ul", {}, h("li", { key: "0" }, "0"), h("li", { key: "1" }, "1")),
         ],
         [
-          html`<ul>
-            <li key="0">0</li>
-            <li key="1">1</li>
-            <li key="2">2</li>
-          </ul>`,
-          html`<ul>
-            ${null}
-          </ul>`,
+          h(
+            "ul",
+            {},
+            h("li", { key: "0" }, "0"),
+            h("li", { key: "1" }, "1"),
+            h("li", { key: "2" }, "2")
+          ),
+          h("ul", {}, h("li", { key: "1" }, "1"), h("li", { key: "0" }, "0")),
         ],
         [
-          html`<ul></ul>`,
-          html`<ul>
-            <li key="1">1</li>
-            <li key="0">0</li>
-          </ul>`,
+          h(
+            "ul",
+            {},
+            h("li", { key: "0" }, "0"),
+            h("li", { key: "1" }, "1"),
+            h("li", { key: "2" }, "2")
+          ),
+          h(
+            "ul",
+            {},
+            h("li", { key: "0" }, "0"),
+            h("li", { key: "1" }, "one"),
+            h("li", { key: "2" }, "2")
+          ),
         ],
         [
-          html`<ul></ul>`,
-          html`<ul>
-            <li key="1">1</li>
-            <li key="0">0</li>
-          </ul>`,
+          h(
+            "ul",
+            {},
+            h("li", { key: "0" }, "0"),
+            h("li", { key: "1" }, "1"),
+            h("li", { key: "2" }, "2")
+          ),
+          h("ul", {}, h("li", { key: "4" }, "4"), h("li", { key: "5" }, "5")),
         ],
         [
-          html`<ul>
-            <li key="0">0</li>
-            <li key="1">1</li>
-          </ul>`,
-          html`<ul>
-            <li key="0">0</li>
-            <li key="1">1</li>
-            <li key="2">2</li>
-          </ul>`,
+          h("div", { style: "color: white; background-color: black" }, "Hello"),
+          h("div", {}, "Hello"),
         ],
         [
-          html`<ul>
-            <li key="0">0</li>
-            <li key="1">1</li>
-            <${Numbers} key="3" />
-          </ul>`,
-          html`<ul>
-            <li key="0">0</li>
-            <li key="1">1</li>
-            <li key="2">2</li>
-            <${Numbers} key="3" />
-          </ul>`,
+          h(
+            "div",
+            {
+              style:
+                "background: -moz-linear-gradient(top, #000 0%, #fff 100%)",
+            },
+            "Hello"
+          ),
+          h("div", {}, "Hello"),
         ],
         [
-          html`<ul>
-            <li key="0">0</li>
-            <li key="1">1</li>
-            <li key="2">2</li>
-          </ul>`,
-          html`<ul>
-            <li key="0">0</li>
-            <li key="1">1</li>
-          </ul>`,
+          h("div", {}, "Hello"),
+          h("div", { style: "color: white; background-color: black" }, "Hello"),
         ],
         [
-          html`<ul>
-            <li key="0">0</li>
-            <li key="1">1</li>
-            <li key="2">2</li>
-          </ul>`,
-          html`<ul>
-            <li key="1">1</li>
-            <li key="0">0</li>
-          </ul>`,
+          h("div", { style: "color: red" }, "Hello"),
+          h("div", { style: "color: white; background-color: black" }, "Hello"),
         ],
         [
-          html`<ul>
-            <li key="0">0</li>
-            <li key="1">1</li>
-            <li key="2">2</li>
-          </ul>`,
-          html`<ul>
-            <li key="0">0</li>
-            <li key="1">one</li>
-            <li key="2">2</li>
-          </ul>`,
+          h("div", { style: "color: white; background-color: black" }, "Hello"),
+          h("div", { style: "color: red" }, "Hello"),
         ],
         [
-          html`<ul>
-            <li key="0">0</li>
-            <li key="1">1</li>
-            <li key="2">2</li>
-          </ul>`,
-          html`<ul>
-            <li key="4">4</li>
-            <li key="5">5</li>
-          </ul>`,
+          h("div", { style: "color: white; background-color: black" }, "Hello"),
+          h("div", { style: { color: "red" } }, "Hello"),
         ],
         [
-          html`<div style="color: white; background-color: black">Hello</div>`,
-          html`<div>Hello</div>`,
+          h("div", { style: "color: red" }, "Hello"),
+          h(
+            "div",
+            { style: { color: "white", backgroundColor: "black" } },
+            "Hello"
+          ),
+        ],
+        [h("div", { style: { color: "red" } }, "Hello"), h("div", {}, "Hello")],
+        [h("div", {}, "Hello"), h("div", { style: { color: "red" } }, "Hello")],
+        [
+          h("div", { style: { color: "red" } }, "Hello"),
+          h("div", { style: { color: "red" } }, "Hello"),
         ],
         [
-          html`<div
-            style="background: -moz-linear-gradient(top, #000 0%, #fff 100%)"
-          >
-            Hello
-          </div>`,
-          html`<div>Hello</div>`,
+          h("div", { style: { color: "red" } }, "Hello"),
+          h(
+            "div",
+            { style: { color: "white", backgroundColor: "black" } },
+            "Hello"
+          ),
         ],
         [
-          html`<div>Hello</div>`,
-          html`<div style="color: white; background-color: black">Hello</div>`,
+          h(
+            "div",
+            { style: { color: "white", backgroundColor: "black" } },
+            "Hello"
+          ),
+          h("div", { style: { color: "red" } }, "Hello"),
+        ],
+        [h("div", { className: "my-class" }, "Hello"), h("div", {}, "Hello")],
+        [h("div", {}, "Hello"), h("div", { class: "my-class" }, "Hello")],
+        [
+          h("div", { className: "my-class" }, "Hello"),
+          h("div", { className: false }, "Hello"),
         ],
         [
-          html`<div style="color: red">Hello</div>`,
-          html`<div style="color: white; background-color: black">Hello</div>`,
+          h("div", { className: false }, "Hello"),
+          h("div", { className: "my-class" }, "Hello"),
         ],
         [
-          html`<div style="color: white; background-color: black">Hello</div>`,
-          html`<div style="color: red">Hello</div>`,
+          h("div", { className: "my-class" }, "Hello"),
+          h("div", { className: true }, "Hello"),
         ],
         [
-          html`<div style="color: white; background-color: black">Hello</div>`,
-          html`<div style=${{ color: "red" }}>Hello</div>`,
+          h("div", { className: true }, "Hello"),
+          h("div", { className: "my-class" }, "Hello"),
         ],
         [
-          html`<div style="color: red">Hello</div>`,
-          html`<div style=${{ color: "white", backgroundColor: "black" }}>
-            Hello
-          </div>`,
+          h(
+            "svg",
+            { height: "100", width: "100" },
+            h("circle", {
+              cx: "50",
+              cy: "50",
+              r: "40",
+              stroke: "black",
+              "stroke-width": "3",
+              fill: "red",
+            })
+          ),
+          h(
+            "svg",
+            { height: "100", width: "100" },
+            h("circle", {
+              cx: "100",
+              cy: "100",
+              r: "40",
+              stroke: "black",
+              "stroke-width": "3",
+              fill: "red",
+            })
+          ),
         ],
         [
-          html`<div style=${{ color: "red" }}>Hello</div>`,
-          html`<div>Hello</div>`,
+          h("span", {}, "Something else"),
+          h(
+            "svg",
+            { height: "100", width: "100" },
+            h("circle", {
+              cx: "100",
+              cy: "100",
+              r: "40",
+              stroke: "black",
+              "stroke-width": "3",
+              fill: "red",
+            })
+          ),
         ],
         [
-          html`<div>Hello</div>`,
-          html`<div style=${{ color: "red" }}>Hello</div>`,
-        ],
-        [
-          html`<div style=${{ color: "red" }}>Hello</div>`,
-          html`<div style=${{ color: "red" }}>Hello</div>`,
-        ],
-        [
-          html`<div style=${{ color: "red" }}>Hello</div>`,
-          html`<div style=${{ color: "white", backgroundColor: "black" }}>
-            Hello
-          </div>`,
-        ],
-        [
-          html`<div style=${{ color: "white", backgroundColor: "black" }}>
-            Hello
-          </div>`,
-          html`<div style=${{ color: "red" }}>Hello</div>`,
-        ],
-        [html`<div className="my-class">Hello</div>`, html`<div>Hello</div>`],
-        [html`<div>Hello</div>`, html`<div class="my-class">Hello</div>`],
-        [
-          html`<div className="my-class">Hello</div>`,
-          html`<div className=${false}>Hello</div>`,
-        ],
-        [
-          html`<div className=${false}>Hello</div>`,
-          html`<div className="my-class">Hello</div>`,
-        ],
-        [
-          html`<div className="my-class">Hello</div>`,
-          html`<div className>Hello</div>`,
-        ],
-        [
-          html`<div className>Hello</div>`,
-          html`<div className="my-class">Hello</div>`,
-        ],
-        [
-          html`
-            <svg height="100" width="100">
-              <circle
-                cx="50"
-                cy="50"
-                r="40"
-                stroke="black"
-                stroke-width="3"
-                fill="red"
-              />
-            </svg>
-          `,
-          html`
-            <svg height="100" width="100">
-              <circle
-                cx="100"
-                cy="100"
-                r="40"
-                stroke="black"
-                stroke-width="3"
-                fill="red"
-              />
-            </svg>
-          `,
-        ],
-        [
-          html`<span>Something else</span>`,
-          html`
-            <svg height="100" width="100">
-              <circle
-                cx="100"
-                cy="100"
-                r="40"
-                stroke="black"
-                stroke-width="3"
-                fill="red"
-              />
-            </svg>
-          `,
-        ],
-        [
-          html`
-            <svg height="100" width="100">
-              <circle
-                cx="100"
-                cy="100"
-                r="40"
-                stroke="black"
-                stroke-width="3"
-                fill="red"
-              />
-            </svg>
-          `,
-          html`<span>Something else</span>`,
+          h(
+            "svg",
+            { height: "100", width: "100" },
+            h("circle", {
+              cx: "100",
+              cy: "100",
+              r: "40",
+              stroke: "black",
+              "stroke-width": "3",
+              fill: "red",
+            })
+          ),
+          h("span", {}, "Something else"),
         ],
         [
           {
             type: Childish,
             props: {},
             children: [
-              [
-                "Hello",
-                html`<${Childish}><p>beautiful</p></${Childish}>`,
-                "world",
-              ],
+              ["Hello", h(Childish, {}, h("p", {}, "beautiful")), "world"],
             ],
           },
-          html`
-            <${Childish}>
-              ${[
-                [
-                  html`<p>Hello</p>`,
-                  html`<${Childish}><p>beautiful</p></${Childish}>`,
-                  html`<p>world!</p>`,
-                ],
-              ]}
-            </${Childish}>
-          `,
+          h(Childish, {}, [
+            [
+              h("p", {}, "Hello"),
+              h(Childish, {}, h("p", {}, "beautiful")),
+              h("p", {}, "world!"),
+            ],
+          ]),
         ],
       ].forEach(([a, ...updates]) => {
         expect(a, "to update to", ...updates);

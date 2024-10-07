@@ -7,15 +7,10 @@
   "module": "./src/index.js",
   "exports": {
     ".": "./src/index.js",
-    "./h": "./src/h.js",
-    "./html": "./src/html.js"
+    "./h": "./src/h.js"
   },
   "types": "./types/index.d.ts",
-  "files": [
-    "dist",
-    "src",
-    "types"
-  ],
+  "files": ["dist", "src", "types"],
   "keywords": [
     "dependable",
     "vdom",
@@ -27,7 +22,7 @@
   ],
   "scripts": {
     "test": "mocha",
-    "format": "prettier --write '**/*.js'",
+    "format": "prettier --write '**/*.{ts,js,md}'",
     "lint": "prettier --check '**/*.js' && eslint .",
     "types": "rm -rf types && tsc && cp ./src/*.d.ts ./types",
     "build": "rm -rf dist && npm run types && rollup -c rollup.config.js",

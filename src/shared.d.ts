@@ -8,7 +8,7 @@
  * @example
  * Here we define two new context properties `foo` and `bar`:
  * ```js
- * html`<Context foo="foo" bar="bar">${children}</Context>`
+ * h("Context", { foo: "foo", bar: "bar" }, children);
  * ```
  */
 export type Context = Record<string, any>;
@@ -34,9 +34,7 @@ export type Context = Record<string, any>;
  *   }
  *
  *   render() {
- *     html`
- *       <h1 ref=${this.setReferenceToH1}>Heading</h1>
- *     `
+ *     return h("h1", { ref: this.setReferenceToH1 }, "Heading");
  *   }
  * }
  * ```
@@ -46,15 +44,11 @@ export type Context = Record<string, any>;
  * @example
  *
  * ```js
- * html`
- *   <h1 style="background: red">In the red</h1>
- * `
+ * h("h1", style: "background: red", "In the red");
  * ```
  *
  * ```js
- * html`
- *   <h1 style=${{background: "red"}}>In the red</h1>
- * `
+ * h("h1", style: { "background": "red" }, "In the red");
  * ```
  */
 export type Props = Record<string, any> & {
@@ -72,9 +66,7 @@ export type RefCallback = (node: Element) => void;
  * ```js
  * class MyComponent implements Component {
  *   render({ color, children }) {
- *     return html`
- *       <h1 style=${{background: color}}>${children}</h1>
- *     `
+ *     return h("h1", style: { "background": "red" }, "In the red");
  *   }
  * }
  * ```
@@ -161,24 +153,20 @@ export interface ComponentClass {
  * Appeding children to the document body
  *
  * ```js
- * html`
- *   <h1>This is inside of the component</h1>
- *   <Portal>
- *     This is rendered inside of the document body</p>
- *   </Portal>
- * `
+ * return [
+ *   h("h1", {}, "This is inside of the component"),
+ *   h("Portal", {}, h("p", {}, "This is rendered inside of the document body"))
+ * ];
  * ```
  *
  * @example
  * Appeding children to a specific target
  *
  * ```js
- * html`
- *   <h1>This is inside of the component</h1>
- *   <Portal target=${target}>
- *     This is rendered inside of the target</p>
- *   </Portal>
- * `
+ * return [
+ *   h("h1", {}, "This is inside of the component"),
+ *   h("Portal", {}, h("p", {target}, "This is rendered inside of the document body"))
+ * ];
  * ```
  */
 export type Portal = "Portal";

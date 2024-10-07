@@ -1,14 +1,14 @@
 import unexpected from "unexpected";
 import unexpectedDom from "unexpected-dom";
 import unexpectedSimon from "unexpected-sinon";
-import { render, html } from "../src/index.js";
+import { render, h } from "../src/index.js";
 import { computed, observable, flush } from "@dependable/state";
 import sinon from "sinon";
 
 const expect = unexpected.clone().use(unexpectedSimon).use(unexpectedDom);
 
 class ErrorBoundary {
-  constructor(props, context) {
+  constructor() {
     this.error = observable(null);
   }
 
@@ -42,13 +42,15 @@ describe("view", () => {
   describe("with simple markup", () => {
     it("renders the markup to DOM", () => {
       render(
-        html`
-          <section data-test-id="intro">
-            <h1 class="title">Hello <b>DOM!</b></h1>
-            <p>This will create some new DOM.</p>
-          </section>
-          <aside>You can have multiple root elements</aside>
-        `,
+        [
+          h(
+            "section",
+            { "data-test-id": "intro" },
+            h("h1", { class: "title" }, "Hello ", h("b", {}, "DOM!")),
+            h("p", {}, "This will create some new DOM.")
+          ),
+          h("aside", {}, "You can have multiple root elements"),
+        ],
         container
       );
 
@@ -64,11 +66,11 @@ describe("view", () => {
     it("renders the markup to DOM", () => {
       class Title {
         render({ children }) {
-          return html`<h1 class="title">${children}</h1>`;
+          return h("h1", { class: "title" }, children);
         }
       }
 
-      render(html`<${Title}>Title<//>`, container);
+      render(h(Title, {}, "Title"), container);
 
       expect(
         container,
@@ -88,11 +90,11 @@ describe("view", () => {
     it("renders the markup to DOM", () => {
       class Title {
         render() {
-          return html`<h1 class="title">${message()}</h1>`;
+          return h("h1", { class: "title" }, message());
         }
       }
 
-      render(html`<${Title}>Title<//>`, container);
+      render(h(Title, {}, "Title"), container);
 
       expect(
         container,
@@ -105,11 +107,11 @@ describe("view", () => {
       it("re-renders", () => {
         class Title {
           render() {
-            return html`<h1 class="title" title=${message()}>${message()}</h1>`;
+            return h("h1", { class: "title", title: message() }, message());
           }
         }
 
-        render(html`<${Title} />`, container);
+        render(h(Title), container);
 
         expect(
           container,
@@ -148,11 +150,11 @@ describe("view", () => {
           }
 
           render() {
-            return html`<h1 data-id=${currentId()}>${currentMessage()}</h1>`;
+            return h("h1", { "data-id": currentId() }, currentMessage());
           }
         }
 
-        render(html`<${Message} />`, container);
+        render(h(Message), container);
 
         expect(
           container,
@@ -184,17 +186,17 @@ describe("view", () => {
 
         class Title {
           render({ title, children }) {
-            return html`<h1 class="title" title=${title}>${children}</h1>`;
+            return h("h1", { class: "title", title: title }, children);
           }
         }
 
         class App {
           render() {
-            return html`<${Title} title=${title()}>${message()}<//>`;
+            return h(Title, { title: title() }, message());
           }
         }
 
-        render(html`<${App} />`, container);
+        render(h(App), container);
 
         expect(
           container,
@@ -221,17 +223,17 @@ describe("view", () => {
 
         class Title {
           render({ children }) {
-            return html`<h1 class="title" title=${title()}>${children}</h1>`;
+            return h("h1", { class: "title", title: title() }, children);
           }
         }
 
         class App {
           render() {
-            return html`<${Title}>${message()}<//>`;
+            return h(Title, {}, message());
           }
         }
 
-        render(html`<${App} />`, container);
+        render(h(App), container);
 
         expect(
           container,
@@ -266,15 +268,15 @@ describe("view", () => {
                 ? this.items.slice().reverse()
                 : this.items;
 
-              return html`
-                <ul>
-                  ${items.map((item) => html`<li key=${item}>${item}</li>`)}
-                </ul>
-              `;
+              return h(
+                "ul",
+                null,
+                items.map((item) => h("li", { key: item }, item))
+              );
             }
           }
 
-          render(html`<${Reversible} />`, container);
+          render(h(Reversible), container);
 
           const firstItem = container.firstElementChild.firstElementChild;
 
@@ -314,7 +316,7 @@ describe("view", () => {
       const title = observable("Title");
 
       class TestComponent {
-        constructor(props, context) {
+        constructor() {
           this.willMount = willMountSpy;
           this.didMount = didMountSpy;
           this.didRender = didRenderSpy;
@@ -323,17 +325,17 @@ describe("view", () => {
         }
 
         render({ title }) {
-          return html`<h1 title=${title}>${message()}</h1>`;
+          return h("h1", { title: title }, message());
         }
       }
 
       class App {
         render() {
-          return visible() ? html`<${TestComponent} title=${title()} />` : null;
+          return visible() ? h(TestComponent, { title: title() }) : null;
         }
       }
 
-      render(html`<${App} />`, container);
+      render(h(App), container);
 
       expect(
         container,
@@ -413,16 +415,19 @@ describe("view", () => {
         }
 
         expect(() => {
-          render(html`<${TestComponent} />`, store, container);
+          render(h(TestComponent), store, container);
         }, "to throw");
       });
     });
 
     describe("when didCatch is defined", () => {
-      const parentFallback = html`<h1 data-test-id="parent-failure">
-        Parent failure
-      </h1>`;
-      const fallback = html`<h1 data-test-id="failure">Failure</h1>`;
+      const parentFallback = h(
+        "h1",
+        { "data-test-id": "parent-failure" },
+        "Parent failure"
+      );
+
+      const fallback = h("h1", { "data-test-id": "failure" }, "Failure");
 
       it("catches errors in constructors", () => {
         class TestComponent {
@@ -436,11 +441,11 @@ describe("view", () => {
         }
 
         render(
-          html`<${ErrorBoundary} name="test-parent" fallback=${parentFallback}>
-            <${ErrorBoundary} name="test" fallback=${fallback}>
-              <${TestComponent} />
-            <//>
-          <//>`,
+          h(
+            ErrorBoundary,
+            { name: "test-parent", fallback: parentFallback },
+            h(ErrorBoundary, { name: "test", fallback }, h(TestComponent))
+          ),
           container
         );
 
@@ -460,16 +465,16 @@ describe("view", () => {
 
         class TestComponent {
           render() {
-            return html`<h1>${crashMachine()}</h1>`;
+            return h("h1", {}, crashMachine());
           }
         }
 
         render(
-          html`<${ErrorBoundary} name="test-parent" fallback=${parentFallback}>
-            <${ErrorBoundary} name="test" fallback=${fallback}>
-              <${TestComponent} />
-            <//>
-          <//>`,
+          h(
+            ErrorBoundary,
+            { name: "test-parent", fallback: parentFallback },
+            h(ErrorBoundary, { name: "test", fallback }, h(TestComponent))
+          ),
           container
         );
 
@@ -494,11 +499,11 @@ describe("view", () => {
         }
 
         render(
-          html`<${ErrorBoundary} name="test-parent" fallback=${parentFallback}>
-            <${ErrorBoundary} name="test" fallback=${fallback}>
-              <${TestComponent} />
-            <//>
-          <//>`,
+          h(
+            ErrorBoundary,
+            { name: "test-parent", fallback: parentFallback },
+            h(ErrorBoundary, { name: "test", fallback }, h(TestComponent))
+          ),
           container
         );
 
@@ -523,11 +528,11 @@ describe("view", () => {
         }
 
         render(
-          html`<${ErrorBoundary} name="test-parent" fallback=${parentFallback}>
-            <${ErrorBoundary} name="test" fallback=${fallback}>
-              <${TestComponent} />
-            <//>
-          <//>`,
+          h(
+            ErrorBoundary,
+            { name: "test-parent", fallback: parentFallback },
+            h(ErrorBoundary, { name: "test", fallback }, h(TestComponent))
+          ),
           container
         );
 
@@ -548,11 +553,11 @@ describe("view", () => {
         }
 
         render(
-          html`<${ErrorBoundary} name="test-parent" fallback=${parentFallback}>
-            <${ErrorBoundary} name="test" fallback=${fallback}>
-              <${TestComponent} />
-            <//>
-          <//>`,
+          h(
+            ErrorBoundary,
+            { name: "test-parent", fallback: parentFallback },
+            h(ErrorBoundary, { name: "test", fallback }, h(TestComponent))
+          ),
           container
         );
 
@@ -574,16 +579,16 @@ describe("view", () => {
           }
 
           render() {
-            return html`<h1>${message()}</h1>`;
+            return h("h1", {}, message());
           }
         }
 
         render(
-          html`<${ErrorBoundary} name="test-parent" fallback=${parentFallback}>
-            <${ErrorBoundary} name="test" fallback=${fallback}>
-              <${TestComponent} />
-            <//>
-          <//>`,
+          h(
+            ErrorBoundary,
+            { name: "test-parent", fallback: parentFallback },
+            h(ErrorBoundary, { name: "test", fallback }, h(TestComponent))
+          ),
           container
         );
 
@@ -612,26 +617,25 @@ describe("view", () => {
 
         class App {
           render() {
-            return html`
-              <${ConditionalChildren} visible=${visible()}>
-                <${TestComponent} />
-              <//>
-            `;
+            return h(
+              ConditionalChildren,
+              { visible: visible() },
+              h(TestComponent)
+            );
           }
         }
 
         render(
-          html`<${ErrorBoundary} name="test-parent" fallback=${parentFallback}>
-            <${ErrorBoundary} name="test" fallback=${fallback}>
-              <${App} />
-            <//>
-          <//>`,
+          h(
+            ErrorBoundary,
+            { name: "test-parent", fallback: parentFallback },
+            h(ErrorBoundary, { name: "test", fallback }, h(App))
+          ),
           container
         );
 
         visible(false);
         flush();
-
         expect(
           container,
           "to contain elements matching",
@@ -644,7 +648,7 @@ describe("view", () => {
   describe("when using inline styles", () => {
     it("allows setting inline style on the element as a string", () => {
       render(
-        html`<span style="background: red; color: blue">I'm red</span>`,
+        h("span", { style: "background: red; color: blue" }, "I'm red"),
         container
       );
 
@@ -657,9 +661,7 @@ describe("view", () => {
 
     it("allows setting inline style on the element as an object", () => {
       render(
-        html`<span style=${{ background: "red", color: "blue" }}
-          >I'm red</span
-        >`,
+        h("span", { style: { background: "red", color: "blue" } }, "I'm red"),
         container
       );
 
@@ -671,7 +673,7 @@ describe("view", () => {
     });
 
     it("allows setting inline css variables as a string", () => {
-      render(html`<span style="--my-variable: 42">I'm red</span>`, container);
+      render(h("span", { style: "--my-variable: 42" }, "I'm red"), container);
 
       expect(
         container,
@@ -682,7 +684,7 @@ describe("view", () => {
 
     it("allows setting inline css variables as an object", () => {
       render(
-        html`<span style=${{ "--my-variable": 42 }}>I'm red</span>`,
+        h("span", { style: { "--my-variable": 42 } }, "I'm red"),
         container
       );
 
@@ -702,15 +704,10 @@ describe("view", () => {
         }
 
         render() {
-          return html`
-            <section>
-              <h1 ref=${this.setId}>Title</h1>
-            </section>
-          `;
+          return h("section", null, h("h1", { ref: this.setId }, "Title"));
         }
       }
-
-      render(html`<${TestComponent} />`, container);
+      render(h(TestComponent), container);
 
       expect(
         container,
@@ -722,7 +719,6 @@ describe("view", () => {
     describe("when the ref is replaced", () => {
       it("calls the new ref", () => {
         const refName = observable("setId");
-
         class TestComponent {
           setId(dom) {
             dom.setAttribute("id", "title");
@@ -733,22 +729,21 @@ describe("view", () => {
           }
 
           render() {
-            return html`
-              <section>
-                <h1 ref=${this[refName()]}>Title</h1>
-              </section>
-            `;
+            return h(
+              "section",
+              null,
+              h("h1", { ref: this[refName()] }, "Title")
+            );
           }
         }
 
-        render(html`<${TestComponent} />`, container);
+        render(h(TestComponent), container);
 
         expect(
           container,
           "to satisfy",
           '<div><section><h1 id="title">Title</h1></section></div>'
         );
-
         refName("setTitle");
         flush();
 
@@ -764,11 +759,9 @@ describe("view", () => {
   describe("when adding an event listener", () => {
     it("attaches the event listener to the DOM element", () => {
       const listener = sinon.spy();
-
-      render(html`<button onClick=${listener}>click me</button>`, container);
+      render(h("button", { onClick: listener }, "click me"), container);
 
       const button = container.querySelector("button");
-
       button.dispatchEvent(new window.CustomEvent("click"));
 
       expect(listener, "to have calls satisfying", () => {
@@ -780,30 +773,23 @@ describe("view", () => {
       it("deattaches the old listener and attaches the new one", () => {
         const oldListener = sinon.spy();
         const newListener = sinon.spy();
-
         const listenerName = observable("old");
-
         class TestComponent {
           render() {
-            return html`
-              <button
-                onClick=${listenerName() === "old" ? oldListener : newListener}
-              >
-                click me
-              </button>
-            `;
+            return h(
+              "button",
+              { onClick: listenerName() === "old" ? oldListener : newListener },
+              "click me"
+            );
           }
         }
 
-        render(html`<${TestComponent} />`, container);
+        render(h(TestComponent), container);
 
         const button = container.querySelector("button");
-
         button.dispatchEvent(new window.CustomEvent("click"));
-
         listenerName("new");
         flush();
-
         button.dispatchEvent(new window.CustomEvent("click"));
 
         expect([oldListener, newListener], "to have calls satisfying", () => {
@@ -816,18 +802,14 @@ describe("view", () => {
     describe("and removing it again", () => {
       it("no longer calls the event handler", () => {
         const listener = sinon.spy();
-
         const enabled = observable(true);
-
         class TestComponent {
           render() {
-            return html`<button onClick=${enabled() && listener}>
-              click me
-            </button>`;
+            return h("button", { onClick: enabled() && listener }, "click me");
           }
         }
 
-        render(html`<${TestComponent} />`, container);
+        render(h(TestComponent), container);
 
         const button = container.querySelector("button");
 
@@ -847,21 +829,18 @@ describe("view", () => {
     describe("and removing the attribute", () => {
       it("no longer calls the event handler", () => {
         const listener = sinon.spy();
-
         const enabled = observable(true);
-
         class TestComponent {
           render() {
             return enabled()
-              ? html`<button onClick=${listener}>click me</button>`
-              : html`<button>click me</button>`;
+              ? h("button", { onClick: listener }, "click me")
+              : h("button", {}, "click me");
           }
         }
 
-        render(html`<${TestComponent} />`, container);
+        render(h(TestComponent), container);
 
         const button = container.querySelector("button");
-
         button.dispatchEvent(new window.CustomEvent("click"));
 
         enabled(false);
@@ -884,14 +863,15 @@ describe("view", () => {
       const captureListener = sinon.spy();
 
       render(
-        html`<div onClickCapture=${captureListener}>
-          <button onClick=${listener}>click me</button>
-        </div>`,
+        h(
+          "div",
+          { onClickCapture: captureListener },
+          h("button", { onClick: listener }, "click me")
+        ),
         container
       );
 
       const button = container.querySelector("button");
-
       button.dispatchEvent(new window.CustomEvent("click", { bubbles: true }));
 
       expect(captureListener, "to have calls satisfying", () => {
@@ -903,25 +883,23 @@ describe("view", () => {
       it("deattaches the old listener and attaches the new one", () => {
         const oldListener = sinon.spy();
         const newListener = sinon.spy();
-
         const listenerName = observable("old");
-
         class TestComponent {
           render() {
-            return html`<button
-              onClickCapture=${listenerName() === "old"
-                ? oldListener
-                : newListener}
-            >
-              click me
-            </button>`;
+            return h(
+              "button",
+              {
+                onClickCapture:
+                  listenerName() === "old" ? oldListener : newListener,
+              },
+              "click me"
+            );
           }
         }
 
-        render(html`<${TestComponent} />`, container);
+        render(h(TestComponent), container);
 
         const button = container.querySelector("button");
-
         button.dispatchEvent(new window.CustomEvent("click"));
 
         listenerName("new");
@@ -939,21 +917,20 @@ describe("view", () => {
     describe("and removing it again", () => {
       it("no longer calls the event handler", () => {
         const listener = sinon.spy();
-
         const enabled = observable(true);
-
         class TestComponent {
           render() {
-            return html`<button onClickCapture=${enabled() && listener}>
-              click me
-            </button>`;
+            return h(
+              "button",
+              { onClickCapture: enabled() && listener },
+              "click me"
+            );
           }
         }
 
-        render(html`<${TestComponent} />`, container);
+        render(h(TestComponent), container);
 
         const button = container.querySelector("button");
-
         button.dispatchEvent(new window.CustomEvent("click"));
 
         enabled(false);
@@ -970,21 +947,18 @@ describe("view", () => {
     describe("and removing the attribute", () => {
       it("no longer calls the event handler", () => {
         const listener = sinon.spy();
-
         const enabled = observable(true);
-
         class TestComponent {
           render() {
             return enabled()
-              ? html`<button onClickCapture=${listener}>click me</button>`
-              : html`<button>click me</button>`;
+              ? h("button", { onClickCapture: listener }, "click me")
+              : h("button", {}, "click me");
           }
         }
 
-        render(html`<${TestComponent} />`, container);
+        render(h(TestComponent), container);
 
         const button = container.querySelector("button");
-
         button.dispatchEvent(new window.CustomEvent("click"));
 
         enabled(false);
@@ -1001,7 +975,7 @@ describe("view", () => {
 
   describe("when adding a DOM property", () => {
     it("sets the DOM property", () => {
-      render(html`<input .value="My value" />`, container);
+      render(h("input", { ".value": "My value" }), container);
 
       expect(container, "queried for first", "input", "to have properties", {
         value: "My value",
@@ -1011,19 +985,17 @@ describe("view", () => {
     describe("when updating the property", () => {
       it("updates the DOM property", () => {
         const value = observable("Initial value");
-
         class TestComponent {
           render() {
-            return html`<input .value=${value()} />`;
+            return h("input", { ".value": value() });
           }
         }
 
-        render(html`<${TestComponent} />`, container);
+        render(h(TestComponent), container);
 
         expect(container, "queried for first", "input", "to have properties", {
           value: "Initial value",
         });
-
         value("Updated value");
         flush();
 
@@ -1036,16 +1008,15 @@ describe("view", () => {
     describe("when removing the property", () => {
       it("the DOM property is left unchanged", () => {
         const hasValue = observable(true);
-
         class TestComponent {
           render() {
             return hasValue()
-              ? html`<input .value="My value" />`
-              : html`<input />`;
+              ? h("input", { ".value": "My value" })
+              : h("input");
           }
         }
 
-        render(html`<${TestComponent} />`, container);
+        render(h(TestComponent), container);
 
         expect(container, "queried for first", "input", "to have properties", {
           value: "My value",
@@ -1065,25 +1036,22 @@ describe("view", () => {
     describe("and its only the items that changes", () => {
       it("still updates the DOM", () => {
         const number = observable(0);
-
         class TestComponent {
           render() {
             return [
-              html`<span>${number()}</span>`,
-              html`<span>${number() + 1}</span>`,
-              html`<span>${number() + 2}</span>`,
+              h("span", {}, number()),
+              h("span", {}, number() + 1),
+              h("span", {}, number() + 2),
             ];
           }
         }
-
-        render(html`<${TestComponent} />`, container);
+        render(h(TestComponent), container);
 
         expect(
           container,
           "to satisfy",
           "<div><span>0</span><span>1</span><span>2</span></div>"
         );
-
         number(10);
         flush();
 
@@ -1097,21 +1065,19 @@ describe("view", () => {
 
     it("renders the array to the DOM", () => {
       const items = observable(["one", "two", "three"]);
-
       class TestComponent {
         render() {
-          return items().map((item) => html`<span>${item}</span>`);
+          return items().map((item) => h("span", {}, item));
         }
       }
 
-      render(html`<${TestComponent} />`, container);
+      render(h(TestComponent), container);
 
       expect(
         container,
         "to satisfy",
         "<div><span>one</span><span>two</span><span>three</span></div>"
       );
-
       items(["one", "two", "three", "four"]);
       flush();
 
@@ -1124,21 +1090,19 @@ describe("view", () => {
 
     it("renders a keyed array to the DOM", () => {
       const items = observable(["one", "two", "three"]);
-
       class TestComponent {
         render() {
-          return items().map((item, i) => html`<span key=${i}>${item}</span>`);
+          return items().map((item, i) => h("span", { key: i }, item));
         }
       }
 
-      render(html`<${TestComponent} />`, container);
+      render(h(TestComponent), container);
 
       expect(
         container,
         "to satisfy",
         "<div><span>one</span><span>two</span><span>three</span></div>"
       );
-
       items(["one", "two", "three", "four"]);
       flush();
 
@@ -1156,13 +1120,15 @@ describe("view", () => {
         const target = document.createElement("div");
         class TestComponent {
           render() {
-            return html`<Portal target=${target}>
-              <h1>Hello from the portal</h1>
-            </Portal>`;
+            return h(
+              "Portal",
+              { target: target },
+              h("h1", {}, "Hello from the portal")
+            );
           }
         }
 
-        render(html`<${TestComponent} />`, container);
+        render(h(TestComponent), container);
 
         expect(container, "to satisfy", "<div><!--hidden--></div>");
 
@@ -1176,33 +1142,30 @@ describe("view", () => {
       describe("when the target is not specified", () => {
         it("renders the children in the portal document body", () => {
           const visible = observable(true);
-
           class TestComponent {
             render() {
-              return html`
-                <Portal>
-                  <h1>Hello from the portal</h1>
-                </Portal>
-                <section>
-                  <Portal>
-                    <p>this is another portal</p>
-                  </Portal>
-                </section>
-              `;
+              return [
+                h("Portal", {}, h("h1", {}, "Hello from the portal")),
+                h(
+                  "section",
+                  null,
+                  h("Portal", {}, h("p", {}, "this is another portal"))
+                ),
+              ];
             }
           }
 
           class App {
             render() {
-              return html`
-                <${ConditionalChildren} visible=${visible()}>
-                  <${TestComponent} />
-                <//>
-              `;
+              return h(
+                ConditionalChildren,
+                { visible: visible() },
+                h(TestComponent)
+              );
             }
           }
 
-          render(html`<${App} />`, container);
+          render(h(App), container);
 
           expect(
             container,
@@ -1214,7 +1177,6 @@ describe("view", () => {
             "<h1>Hello from the portal</h1>",
             "<p>this is another portal</p>",
           ]);
-
           visible(false);
           flush();
 
@@ -1225,21 +1187,19 @@ describe("view", () => {
 
     describe("when the portal has children", () => {
       let target, message;
-
       beforeEach(() => {
         message = observable("Message from observable");
-
         target = document.createElement("div");
-
         class TestComponent {
           render() {
-            return html`<Portal target=${target}>${message()}</Portal>`;
+            return h("Portal", { target: target }, message());
           }
         }
 
-        render(html`<${TestComponent} />`, container);
+        render(h(TestComponent), container);
 
         expect(container, "to satisfy", "<div><!--hidden--></div>");
+
         expect(target, "to satisfy", "<div>Message from observable</div>");
       });
 
@@ -1264,21 +1224,19 @@ describe("view", () => {
 
     describe("when the portal is empty", () => {
       let target, message;
-
       beforeEach(() => {
         message = observable(null);
-
         target = document.createElement("div");
-
         class TestComponent {
           render() {
-            return html`<Portal target=${target}>${message()}</Portal>`;
+            return h("Portal", { target: target }, message());
           }
         }
 
-        render(html`<${TestComponent} />`, container);
+        render(h(TestComponent), container);
 
         expect(container, "to satisfy", "<div><!--hidden--></div>");
+
         expect(target, "to satisfy", "<div><!--hidden--></div>");
       });
 
@@ -1304,29 +1262,29 @@ describe("view", () => {
     describe("when the target is changed", () => {
       it("moves the children to the new target", () => {
         const target = observable("target1");
-
         const target1 = document.createElement("div");
         const target2 = document.createElement("div");
-
         class TestComponent {
           render() {
-            return html`
-              <Portal target=${target() === "target1" ? target1 : target2}>
-                This is a portal
-              </Portal>
-            `;
+            return h(
+              "Portal",
+              { target: target() === "target1" ? target1 : target2 },
+              "This is a portal"
+            );
           }
         }
 
-        render(html`<${TestComponent} />`, container);
+        render(h(TestComponent), container);
 
         expect(container, "to satisfy", "<div><!--hidden--></div>");
+
         expect(target1, "to satisfy", "<div>This is a portal</div>");
 
         target("target2");
         flush();
 
         expect(target1, "to satisfy", "<div></div>");
+
         expect(target2, "to satisfy", "<div>This is a portal</div>");
       });
     });
@@ -1344,13 +1302,13 @@ describe("view", () => {
     }
 
     it("is used when props isn't provided", () => {
-      render(html`<${Welcome} name="Jane Doe" />`, container);
+      render(h(Welcome, { name: "Jane Doe" }), container);
 
       expect(container, "to satisfy", "<div>Hello, Jane Doe</div>");
     });
 
     it("is overridable", () => {
-      render(html`<${Welcome} greeting="Hi!, " name="Jane Doe" />`, container);
+      render(h(Welcome, { greeting: "Hi!, ", name: "Jane Doe" }), container);
 
       expect(container, "to satisfy", "<div>Hi!, Jane Doe</div>");
     });
@@ -1364,7 +1322,7 @@ describe("view", () => {
         }
       }
 
-      render(html`<${Welcome} name="Jane Doe" />`, container, {
+      render(h(Welcome, { name: "Jane Doe" }), container, {
         greeting: "Hi!, ",
       });
 
@@ -1382,14 +1340,10 @@ describe("view", () => {
         }
       }
 
-      const fallback = html`<div data-test-id="failed">Failed</div>`;
+      const fallback = h("div", { "data-test-id": "failed" }, "Failed");
 
       render(
-        html`
-          <${ErrorBoundary} fallback=${fallback}>
-            <${Welcome} name="Jane Doe" />
-          <//>
-        `,
+        h(ErrorBoundary, { fallback }, h(Welcome, { name: "Jane Doe" })),
         container,
         { greeting: "Hi!, " }
       );
@@ -1407,13 +1361,11 @@ describe("view", () => {
       }
 
       render(
-        html`
-          <Context greeting="Hello!, ">
-            <Context greeting="Hi!, ">
-              <${Welcome} name="Jane Doe" />
-            </Context>
-          </Context>
-        `,
+        h(
+          "Context",
+          { greeting: "Hello!, " },
+          h("Context", { greeting: "Hi!, " }, h(Welcome, { name: "Jane Doe" }))
+        ),
         container,
         { greeting: "Yo!, " }
       );
@@ -1423,13 +1375,12 @@ describe("view", () => {
 
     it("updating the context doesn't trigger a re-render", () => {
       let renderedGreeting;
-
       const greeting = observable("Hi!, ");
 
       class Container {
         render({ children }) {
           renderedGreeting = greeting();
-          return html`<Context greeting=${greeting()}>${children}</Context>`;
+          return h("Context", { greeting: greeting() }, children);
         }
       }
 
@@ -1439,26 +1390,19 @@ describe("view", () => {
         }
       }
 
-      render(
-        html`
-          <${Container}>
-            <${Welcome} name="Jane Doe" />
-          <//>
-        `,
-        container
-      );
+      render(h(Container, null, h(Welcome, { name: "Jane Doe" })), container);
 
       greeting("Yo!, ");
       flush();
 
       expect(renderedGreeting, "to equal", "Yo!, ");
+
       expect(container, "to satisfy", "<div>Hi!, Jane Doe</div>");
     });
   });
 
   describe("when updating an observable in a child component", () => {
     let renderedChild, renderedParent;
-
     beforeEach(() => {
       const greeting = observable("Hi,");
       renderedChild = 0;
@@ -1474,14 +1418,13 @@ describe("view", () => {
       class Parent {
         render() {
           renderedParent++;
-          return html`<${Child} />`;
+          return h(Child);
         }
       }
 
-      render(html`<${Parent} />`, container);
+      render(h(Parent), container);
 
       greeting("Hello,");
-
       flush();
     });
 
@@ -1489,13 +1432,13 @@ describe("view", () => {
       expect(container, "to satisfy", `<div>Hello, Jane Doe</div>`);
 
       expect(renderedChild, "to be", 2);
+
       expect(renderedParent, "to be", 1);
     });
   });
 
   describe("when updating an observable from willMount", () => {
     let renderedChild, renderedParent;
-
     beforeEach(() => {
       const greeting = observable("Hi,", { id: "greeting" });
       renderedChild = 0;
@@ -1515,11 +1458,11 @@ describe("view", () => {
 
         render() {
           renderedParent++;
-          return html`<${Child} />`;
+          return h(Child);
         }
       }
 
-      render(html`<${Parent} />`, container);
+      render(h(Parent), container);
 
       flush();
     });
@@ -1528,13 +1471,13 @@ describe("view", () => {
       expect(container, "to satisfy", `<div>Hello, Jane Doe</div>`);
 
       expect(renderedChild, "to be", 1);
+
       expect(renderedParent, "to be", 1);
     });
   });
 
   describe("when a component is updated after it is unmounted", () => {
     let oddRendered, evenRendered;
-
     beforeEach(() => {
       oddRendered = 0;
       evenRendered = 0;
@@ -1561,40 +1504,43 @@ describe("view", () => {
 
         render() {
           if (number() % 2 === 0) {
-            return html`<${Even} />`;
+            return h(Even);
           } else {
-            return html`<${Odd} />`;
+            return h(Odd);
           }
         }
       }
 
-      render(html`<${Parent} />`, container);
+      render(h(Parent), container);
       flush();
+
       number(2);
       flush();
     });
 
     it("ignores the update", () => {
       expect(container, "to satisfy", `<div>Even number 2</div>`);
+
       expect(evenRendered, "to be", 1);
+
       expect(oddRendered, "to be", 1);
     });
   });
 
   it("renders SVGs in the correct namespace", () => {
     render(
-      html`
-        <svg height="100" width="100">
-          <circle
-            cx="50"
-            cy="50"
-            r="40"
-            stroke="black"
-            stroke-width="3"
-            fill="red"
-          />
-        </svg>
-      `,
+      h(
+        "svg",
+        { height: "100", width: "100" },
+        h("circle", {
+          cx: "50",
+          cy: "50",
+          r: "40",
+          stroke: "black",
+          "stroke-width": "3",
+          fill: "red",
+        })
+      ),
       container
     );
 
@@ -1602,6 +1548,7 @@ describe("view", () => {
     const circle = container.querySelector("circle");
 
     expect(svg.namespaceURI, "to equal", "http://www.w3.org/2000/svg");
+
     expect(circle.namespaceURI, "to equal", "http://www.w3.org/2000/svg");
   });
 });
