@@ -1,7 +1,7 @@
 {
   "type": "module",
   "name": "@dependable/view",
-  "version": "0.22.2",
+  "version": "0.22.3",
   "description": "View layer for @dependable/state",
   "sideEffects": false,
   "module": "./dist/dependable-view-index.esm.js",
