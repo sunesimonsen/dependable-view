@@ -7,21 +7,21 @@
   "module": "./dist/dependable-view-index.esm.js",
   "exports": {
     ".": {
-      "types": "./types/index.d.ts",
+      "types": "./lib/index.d.ts",
       "module": "./dist/dependable-view-index.esm.js",
       "import": "./dist/dependable-view-index.esm.js"
     },
     "./h": {
-      "types": "./types/h.d.ts",
+      "types": "./lib/h.d.ts",
       "module": "./dist/dependable-view-h.esm.js",
       "import": "./dist/dependable-view-h.esm.js"
     }
   },
-  "types": "./types/index.d.ts",
+  "types": "./lib/index.d.ts",
   "files": [
     "dist",
     "src",
-    "types"
+    "lib"
   ],
   "keywords": [
     "dependable",
@@ -36,10 +36,10 @@
     "test": "mocha",
     "format": "prettier --write '**/*.{ts,js,md}'",
     "lint": "prettier --check '**/*.js' && eslint .",
-    "types": "rm -rf types && tsc && cp ./src/*.d.ts ./types",
+    "types": "rm -rf lib && mkdir lib && cp ./src/* ./lib && tsc",
     "build": "rm -rf dist && npm run types && rollup -c rollup.config.js",
     "coverage": "c8 -r lcov -r text npm test",
-    "api-docs": "npm run types && typedoc --out api-docs --hideLegend --hideGenerator src/shared.d.ts ./src/index.d.ts",
+    "api-docs": "npm run types && typedoc --out api-docs --hideGenerator ./lib/shared.d.ts ./lib/index.d.ts",
     "publish-docs": "npm run api-docs && surge api-docs dependable-view-api.surge.sh",
     "prepublishOnly": "npm run build"
   },
