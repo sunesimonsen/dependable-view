@@ -4,10 +4,18 @@
   "version": "0.22.0",
   "description": "View layer for @dependable/state",
   "sideEffects": false,
-  "module": "./src/index.js",
+  "module": "./dist/dependable-view-index.esm.js",
   "exports": {
-    ".": "./src/index.js",
-    "./h": "./src/h.js"
+    ".": {
+      "types": "./types/index.d.ts",
+      "module": "./dist/dependable-view-index.esm.js",
+      "import": "./dist/dependable-view-index.esm.js"
+    },
+    "./h": {
+      "types": "./types/h.d.ts",
+      "module": "./dist/dependable-view-h.esm.js",
+      "import": "./dist/dependable-view-h.esm.js"
+    }
   },
   "types": "./types/index.d.ts",
   "files": [

@@ -150,7 +150,7 @@ export interface ComponentClass {
  * Defines a rendering portal into another target container
  *
  * @example
- * Appeding children to the document body
+ * Appending children to the document body
  *
  * ```js
  * return [
@@ -160,7 +160,7 @@ export interface ComponentClass {
  * ```
  *
  * @example
- * Appeding children to a specific target
+ * Appending children to a specific target
  *
  * ```js
  * return [
