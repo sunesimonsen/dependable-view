@@ -1551,4 +1551,35 @@ describe("view", () => {
 
     expect(circle.namespaceURI, "to equal", "http://www.w3.org/2000/svg");
   });
+
+  describe("rendering twice", () => {
+    let willUnmountSpy, didMountSpy;
+
+    beforeEach(() => {
+      didMountSpy = sinon.spy().named("didMount");
+      willUnmountSpy = sinon.spy().named("willUnmount");
+
+      class TestContent {
+        constructor() {
+          this.didMount = didMountSpy;
+          this.willUnmount = willUnmountSpy;
+        }
+
+        render() {
+          return h("div", {}, "Content");
+        }
+      }
+
+      render(h(TestContent, {}));
+      render(h(TestContent, {}));
+    });
+
+    it("unmounts the old DOM", () => {
+      expect([didMountSpy, willUnmountSpy], "to have calls satisfying", () => {
+        didMountSpy();
+        willUnmountSpy();
+        didMountSpy();
+      });
+    });
+  });
 });

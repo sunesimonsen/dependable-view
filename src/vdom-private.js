@@ -664,6 +664,7 @@ const reThrow = (e) => {
  * @param {import('./shared').Context} context the rendering context
  */
 export const render = (vnodes, container = document.body, context = {}) => {
+  container._unmount?.();
   removeChildren(container);
   const vdom = create(vnodes, {
     _userContext: Object.freeze(context),
@@ -673,6 +674,7 @@ export const render = (vnodes, container = document.body, context = {}) => {
   });
   appendChildren(container, mount(vdom));
   flush(vdom);
+  container._unmount = () => unmount(vdom);
 };
 
 /**
