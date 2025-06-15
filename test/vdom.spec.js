@@ -101,6 +101,11 @@ describe("vdom", () => {
         ["Hello", false, "World"],
         [null, h(Childish, {}, "Hello")],
         [null, h(Childish, {}, "Hello")],
+        [h("div", {}, "hello"), h(Childish, {}, "Hello")],
+        [
+          h(Childish, {}, h("div", {}, "hello"), h("div", {}, "world")),
+          h("div", {}, "hello"),
+        ],
         [h(Childish, {}, "Hello"), false, h(Childish, {}, "World")],
         [h(Childish, {}, "Hello"), null, h(Childish, {}, "World")],
         [
