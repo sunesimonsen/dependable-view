@@ -682,7 +682,7 @@ export const render = (vnodes, container = document.body, context = {}) => {
  *
  * @function
  *
- * @param {import('./shared').VElement} element the virual nodes to clone
+ * @param {import('./shared').VElement} element the virtual nodes to clone
  * @param {import('./shared').VElementOverrides} overrides the overrides for the virtual element
  * @return {import('./shared').VNode} the cloned virtual node
  */
